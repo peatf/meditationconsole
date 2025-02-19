@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import { ReactP5Wrapper } from "react-p5-wrapper";
 import p5Animation from "../meditationanimations/slide7limitlessselfprotocolanimationscript.jsx";
