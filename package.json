@@ -1,13 +1,14 @@
 {
-  "name": "meditation-game",
+  "name": "meditationconsole",
   "version": "1.0.0",
   "dependencies": {
     "react": "^18.0.0",
-  "next": "^13.0.0",
-  "react-p5-wrapper": "*",
-  "p5": "^1.6.0",
-  "lucide-react": "^0.268.0"
-},
+    "react-dom": "^18.0.0",
+    "next": "^13.0.0",
+    "react-p5-wrapper": "*",
+    "p5": "^1.6.0",
+    "lucide-react": "^0.268.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
