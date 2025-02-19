@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 // Import animation components (future imports for actual animations)
