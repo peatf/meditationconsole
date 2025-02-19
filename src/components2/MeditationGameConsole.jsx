@@ -3,15 +3,15 @@
 import { useState } from "react";
 import dynamic from "next/dynamic"; // ✅ Prevents p5 from running on server
 
-// Corrected dynamic imports with the right file paths and fixed filenames
-const Slide2Animation = dynamic(() => import("../../meditationanimations/slide2limitlessselfprotocolanimationscript"), { ssr: false });
-const Slide3Animation = dynamic(() => import("../../meditationanimations/slide3limitlessselfprotocolanimationscript"), { ssr: false });
-const Slide4Animation = dynamic(() => import("../../meditationanimations/slide4limitlessselfprotocolanimationscript"), { ssr: false });
-const Slide5Animation = dynamic(() => import("../../meditationanimations/slide5limitlessselfprotocolanimationscript"), { ssr: false });
-const Slide6Animation = dynamic(() => import("../../meditationanimations/slide6limitlessselfprotocolanimationscript"), { ssr: false });
-const Slide7Animation = dynamic(() => import("../../meditationanimations/slide7limitlessselfprotocolanimationscript"), { ssr: false });
-const Slide8Animation = dynamic(() => import("../../meditationanimations/slide8limitlessselfprotocolanimationscript"), { ssr: false });
-const Slide10Animation = dynamic(() => import("../../meditationanimations/slide10limitlesselfprotocolanimationscript"), { ssr: false });
+// Corrected dynamic imports with proper relative paths
+const Slide2Animation = dynamic(() => import("../meditationanimations/slide2limitlessselfprotocolanimationscript"), { ssr: false });
+const Slide3Animation = dynamic(() => import("../meditationanimations/slide3limitlessselfprotocolanimationscript"), { ssr: false });
+const Slide4Animation = dynamic(() => import("../meditationanimations/slide4limitlessselfprotocolanimationscript"), { ssr: false });
+const Slide5Animation = dynamic(() => import("../meditationanimations/slide5limitlessselfprotocolanimationscript"), { ssr: false });
+const Slide6Animation = dynamic(() => import("../meditationanimations/slide6limitlessselfprotocolanimationscript"), { ssr: false });
+const Slide7Animation = dynamic(() => import("../meditationanimations/slide7limitlessselfprotocolanimationscript"), { ssr: false });
+const Slide8Animation = dynamic(() => import("../meditationanimations/slide8limitlessselfprotocolanimationscript"), { ssr: false });
+const Slide10Animation = dynamic(() => import("../meditationanimations/slide10limitlesselfprotocolanimationscript"), { ssr: false });
 
 // Define the slides array
 const slides = [
