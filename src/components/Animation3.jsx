@@ -1,9 +1,10 @@
 import React from "react";
 import { ReactP5Wrapper } from "react-p5-wrapper";
+import p5Animation from "../meditationanimations/slide3limitlessselfprotocolanimationscript.jsx";
 
 const Animation3 = () => {
-  // Future import once uploaded to GitHub:
-  // import p5Animation from '../meditationanimations/slide3limitlessselfprotocolanimationscript.jsx';
+  return <ReactP5Wrapper sketch={p5Animation} />;
+};
 
   const sketch = (p5) => {
     p5.setup = () => {
