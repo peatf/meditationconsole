@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { ReactP5Wrapper } from "react-p5-wrapper";
+import { P5Wrapper } from "@p5-wrapper/react";
 
 const Animation10 = () => {
   const sketch = (p5) => {
