@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ReactP5Wrapper } from 'react-p5-wrapper';
+import { P5Wrapper } from "@p5-wrapper/react";
 
 const Slide10limitlesselfprotocolanimationscript = () => {
     const sketch = (p5) => {
