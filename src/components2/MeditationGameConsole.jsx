@@ -1,15 +1,16 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-// Import animation components (future imports for actual animations)
-import Animation2 from "./Animation2";
-import Animation3 from "./Animation3";
-import Animation4 from "./Animation4";
-import Animation5 from "./Animation5";
-import Animation6 from "./Animation6";
-import Animation7 from "./Animation7";
-import Animation8 from "./Animation8";
-import Animation10 from "./Animation10";
+import dynamic from "next/dynamic"; // ✅ Prevents p5 from running on server
+
+const Animation2 = dynamic(() => import("./Animation2"), { ssr: false });
+const Animation3 = dynamic(() => import("./Animation3"), { ssr: false });
+const Animation4 = dynamic(() => import("./Animation4"), { ssr: false });
+const Animation5 = dynamic(() => import("./Animation5"), { ssr: false });
+const Animation6 = dynamic(() => import("./Animation6"), { ssr: false });
+const Animation7 = dynamic(() => import("./Animation7"), { ssr: false });
+const Animation8 = dynamic(() => import("./Animation8"), { ssr: false });
+const Animation10 = dynamic(() => import("./Animation10"), { ssr: false });
 
 const slides = [
   { id: 1, text: "Are you willing and ready to connect with the limitless self?", type: "text" },
@@ -26,14 +27,6 @@ const slides = [
 
 const MeditationGameConsole = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
-
-  const nextSlide = () => {
-    if (currentSlide < slides.length - 1) setCurrentSlide(currentSlide + 1);
-  };
-
-  const prevSlide = () => {
-    if (currentSlide > 0) setCurrentSlide(currentSlide - 1);
-  };
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center p-8 bg-gray-100">
@@ -57,13 +50,13 @@ const MeditationGameConsole = () => {
 
         <div className="flex justify-center gap-4 mt-4">
           {currentSlide > 0 && (
-            <button className="bg-gray-300 px-4 py-2 rounded" onClick={prevSlide}>
+            <button className="bg-gray-300 px-4 py-2 rounded" onClick={() => setCurrentSlide(currentSlide - 1)}>
               <ChevronLeft size={20} />
               Previous
             </button>
           )}
           {currentSlide < slides.length - 1 && (
-            <button className="bg-gray-300 px-4 py-2 rounded" onClick={nextSlide}>
+            <button className="bg-gray-300 px-4 py-2 rounded" onClick={() => setCurrentSlide(currentSlide + 1)}>
               Next
               <ChevronRight size={20} />
             </button>
