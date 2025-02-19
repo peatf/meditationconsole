@@ -1,0 +1,67 @@
+
+/* MeditationGameConsole.module.css */
+
+/* General container styling */
+.console-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #1a1a1a;
+  color: white;
+  font-family: 'Arial', sans-serif;
+}
+
+/* Slide text */
+.slide-text {
+  font-size: 1.5rem;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Animation container */
+.animation-container {
+  width: 100%;
+  max-width: 500px;
+  height: 300px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+/* Navigation buttons */
+.button-group {
+  display: flex;
+  gap: 10px;
+}
+
+.button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.button-yes {
+  background-color: #4caf50;
+  color: white;
+}
+
+.button-no {
+  background-color: #f44336;
+  color: white;
+}
+
+.button-nav {
+  background-color: #007bff;
+  color: white;
+}
+
+.button:hover {
+  opacity: 0.8;
+}
