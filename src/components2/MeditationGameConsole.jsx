@@ -7,35 +7,35 @@ import styles from "./MeditationGameConsole.module.css";
 
 // DYNAMIC IMPORTS OF ANIMATIONS (ReactP5Wrapper-based files)
 const Slide2Animation = dynamic(
-  () => import("@/src/meditationanimations/slide2limitlessselfprotocolanimationscript"),
+  () => import("@/meditationanimations/slide2limitlessselfprotocolanimationscript"),
   { ssr: false }
 );
 const Slide3Animation = dynamic(
-  () => import("@/src/meditationanimations/slide3limitlessselfprotocolanimationscript"),
+  () => import("@/meditationanimations/slide3limitlessselfprotocolanimationscript"),
   { ssr: false }
 );
 const Slide4Animation = dynamic(
-  () => import("@/src/meditationanimations/slide4limitlessselfprotocolanimationscript"),
+  () => import("@/meditationanimations/slide4limitlessselfprotocolanimationscript"),
   { ssr: false }
 );
 const Slide5Animation = dynamic(
-  () => import("@/src/meditationanimations/slide5limitlessselfprotocolanimationscript"),
+  () => import("@/meditationanimations/slide5limitlessselfprotocolanimationscript"),
   { ssr: false }
 );
 const Slide6Animation = dynamic(
-  () => import("@/src/meditationanimations/slide6limitlessselfprotocolanimationscript"),
+  () => import("@/meditationanimations/slide6limitlessselfprotocolanimationscript"),
   { ssr: false }
 );
 const Slide7Animation = dynamic(
-  () => import("@/src/meditationanimations/slide7limitlessselfprotocolanimationscript"),
+  () => import("@/meditationanimations/slide7limitlessselfprotocolanimationscript"),
   { ssr: false }
 );
 const Slide8Animation = dynamic(
-  () => import("@/src/meditationanimations/slide8limitlessselfprotocolanimationscript"),
+  () => import("@/meditationanimations/slide8limitlessselfprotocolanimationscript"),
   { ssr: false }
 );
 const Slide10Animation = dynamic(
-  () => import("@/src/meditationanimations/slide10limitlesselfprotocolanimationscript"),
+  () => import("@/meditationanimations/slide10limitlesselfprotocolanimationscript"),
   { ssr: false }
 );
 
