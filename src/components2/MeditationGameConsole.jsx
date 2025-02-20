@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import dynamic from "next/dynamic"; 
+import dynamic from "next/dynamic";
 import styles from "./MeditationGameConsole.module.css";
 
 // DYNAMIC IMPORTS OF ANIMATIONS (Updated to align with @p5-wrapper/react)
