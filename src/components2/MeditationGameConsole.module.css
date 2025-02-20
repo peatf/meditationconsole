@@ -160,3 +160,78 @@
   50% { transform: scale(1.05); }
   75% { transform: scale(0.95); }
 }
+
+/* MeditationGameConsole.module.css */
+/* Add these new styles */
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  background: #f2f3ed;
+}
+
+.max-w-4xl {
+  max-width: 64rem;
+  width: 100%;
+  padding: 2rem;
+  border-radius: 2rem;
+  background: #E8E9E3;
+  box-shadow: -8px -4px 12px rgba(255, 255, 250, 0.8),
+              8px 4px 16px rgba(166, 167, 161, 0.3);
+  position: relative;
+}
+
+.ledContainer {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.animationScreen {
+  width: 100%;
+  height: 24rem;
+  border-radius: 1.25rem;
+  margin: 2rem 0;
+  background: #E8E9E3;
+  box-shadow: inset 8px 8px 16px #CACBC5,
+            inset -8px -8px 16px #F2F3ED;
+}
+
+.buttonContainer {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.button {
+  background: #E8E9E3;
+  border-radius: 1.5rem;
+  padding: 0.75rem 2rem;
+  font-size: 1.125rem;
+  border: 2px solid #D6D7D1;
+  box-shadow: 4px 4px 8px rgba(166, 167, 161, 0.3),
+            -4px -4px 8px rgba(255, 255, 250, 0.8);
+  transition: all 0.2s ease;
+}
+
+.navButtonContainer {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.navButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #E8E9E3;
+  border-radius: 0.75rem;
+  box-shadow: 4px 4px 8px rgba(166, 167, 161, 0.3),
+            -4px -4px 8px rgba(255, 255, 250, 0.8);
+}
