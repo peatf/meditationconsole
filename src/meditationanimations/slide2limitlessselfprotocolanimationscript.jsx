@@ -12,13 +12,17 @@ const sketch = (p) => {
   let noiseGraphics;
   
   p.setup = () => {
-    // Get the parent container's dimensions
-    const canvas = document.querySelector('.animationScreen');
-    if (canvas) {
-      p.createCanvas(canvas.offsetWidth, canvas.offsetHeight);
-    } else {
-      p.createCanvas(400, 400); // Fallback size
+    // First create a default canvas
+    const defaultWidth = 800;
+    const defaultHeight = 600;
+    p.createCanvas(defaultWidth, defaultHeight);
+
+    // Then try to resize it to the container size
+    const container = document.querySelector('.animationScreen');
+    if (container) {
+      p.resizeCanvas(container.offsetWidth, container.offsetHeight);
     }
+
     p.pixelDensity(1);
     p.noStroke();
     noiseGraphics = p.createGraphics(p.width, p.height);
@@ -141,9 +145,9 @@ const sketch = (p) => {
   };
 
   p.windowResized = () => {
-    const canvas = document.querySelector('.animationScreen');
-    if (canvas) {
-      p.resizeCanvas(canvas.offsetWidth, canvas.offsetHeight);
+    const container = document.querySelector('.animationScreen');
+    if (container) {
+      p.resizeCanvas(container.offsetWidth, container.offsetHeight);
       noiseGraphics = p.createGraphics(p.width, p.height);
       generateNoiseTexture();
     }
