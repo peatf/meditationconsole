@@ -197,17 +197,17 @@
   border-radius: 1.25rem;
   margin: 2rem 0;
   background: #E8E9E3;
-  box-shadow: inset 8px 8px 16px rgba(166, 167, 161, 0.3),
-              inset -8px -8px 16px rgba(255, 255, 250, 0.8);
+  position: relative;
+  overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden;
 }
 
 .animationContainer {
   width: 100%;
   height: 100%;
+  position: relative;
 }
 
 .animationPlaceholder {
@@ -215,7 +215,11 @@
   opacity: 0.5;
   font-size: 0.875rem;
 }
-
+.animationContainer canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
 /* Text Styles */
 .slideText {
   text-align: center;
@@ -369,10 +373,11 @@
   position: absolute;
   inset: 0;
   border-radius: 1.25rem;
-  pointer-events: none; /* This ensures the overlay doesn't block interaction */
+  pointer-events: none;
   box-shadow: 
     inset 8px 8px 16px rgba(166, 167, 161, 0.3),
     inset -8px -8px 16px rgba(255, 255, 250, 0.8);
-  z-index: 1; /* Place above the animation */
+  z-index: 1;
 }
+
 }
