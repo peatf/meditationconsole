@@ -2,10 +2,10 @@
 import { ReactP5Wrapper } from "@p5-wrapper/react";
 
 export default function Slide5Animation() {
-  return <ReactP5Wrapper sketch={sketch} />;
+  return <ReactP5Wrapper sketch={sketch} />;
 }
 
-
+const sketch = (p) => {
 
 ////////////////////////////////////////////
 // Pastel Meta-Balls + Blur + Dither + Glitch
@@ -35,269 +35,278 @@ let glitchActive = false;
 let glitchTimer = 0;
 let glitchDuration = 25; // frames of glitch
 
-const sketch = (p) => {
-    p.setup = function() {
-  p.createCanvas(windowWidth, windowHeight);
-  noSmooth(); // Keep a pixelly vibe when scaling up
 
-  // Offscreen buffer at half resolution for the meta-balls
-  layerW = floor(width / 2);
-  layerH = floor(height / 2);
-  blobLayer = createGraphics(layerW, layerH);
+    p.setup = function() {
+    // First create a default canvas
+    const defaultWidth = 800;
+    const defaultHeight = 600;
+    p.createCanvas(defaultWidth, defaultHeight);
 
-  // Offscreen layer for text (full size)
-  textLayer = createGraphics(width, height);
-  textLayer.noSmooth();
+    // Then try to resize it to the container size
+    const container = document.querySelector('.animationScreen');
+    if (container) {
+      p.resizeCanvas(container.offsetWidth, container.offsetHeight);
+    }
+  p.noSmooth(); // Keep a pixelly vibe when scaling up
 
-  // Create random meta-balls
-  for (let i = 0; i < numBlobs; i++) {
-    blobs.push({
-      x: random(layerW),
-      y: random(layerH),
-      r: random(40, 80), // radius
-      dx: random(-1, 1),
-      dy: random(-1, 1)
-    });
-  }
+  // Offscreen buffer at half resolution for the meta-balls
+  layerW = p.floor(p.width / 2);
+  layerH = p.floor(p.height / 2);
+  blobLayer = p.createGraphics(layerW, layerH);
 
-  // Text style
-  textAlign(CENTER, CENTER);
-  textSize(min(width, height) * 0.06);
-  textFont("sans-serif");
+  // Offscreen layer for text (full size)
+  textLayer = p.createGraphics(p.width, p.height);
+  textLayer.noSmooth();
+
+  // Create random meta-balls
+  for (let i = 0; i < numBlobs; i++) {
+    blobs.push({
+      x: p.random(layerW),
+      y: p.random(layerH),
+      r: p.random(40, 80), // radius
+      dx: p.random(-1, 1),
+      dy: p.random(-1, 1)
+    });
+  }
+
+  // Text style
+  p.textAlign(p.CENTER, p.CENTER);
+  p.textSize(p.min(p.width, p.height) * 0.06);
+  p.textFont("sans-serif");
 }
 
-    p.draw = function() {
-  p.background(245, 240, 235); // A soft, warm background
+    p.draw = function() {
+  p.background(245, 240, 235); // A soft, warm background
 
-  //-----------------------------------------
-  // 1) DRAW META-BALLS (half-res) + BLUR + DITHER
-  //-----------------------------------------
-  drawMetaBalls(blobLayer);
-  blobLayer.filter(BLUR, 3); // Big blur for dreamy edges
-  applyBayerDither(blobLayer);
-  // Scale up to main canvas
-  p.image(blobLayer, 0, 0, width, height);
+  //-----------------------------------------
+  // 1) DRAW META-BALLS (half-res) + BLUR + DITHER
+  //-----------------------------------------
+  drawMetaBalls(blobLayer);
+  blobLayer.filter(p.BLUR, 3); // Big blur for dreamy edges
+  applyBayerDither(blobLayer);
+  // Scale up to main canvas
+  p.image(blobLayer, 0, 0, p.width, p.height);
 
-  //-----------------------------------------
-  // 2) DRAW/UPDATE ARTISTIC TEXT
-  //-----------------------------------------
-  updateQuestionFade();
-  drawArtText(); // Offscreen text, then blur/dither, then blend
+  //-----------------------------------------
+  // 2) DRAW/UPDATE ARTISTIC TEXT
+  //-----------------------------------------
+  updateQuestionFade();
+  drawArtText(); // Offscreen text, then blur/dither, then blend
 
-  //-----------------------------------------
-  // 3) GLITCH if active
-  //-----------------------------------------
-  if (glitchActive) {
-    glitchTimer++;
-    applyGlitch();
-    if (glitchTimer > glitchDuration) {
-      glitchActive = false;
-      glitchTimer = 0;
-    }
-  }
+  //-----------------------------------------
+  // 3) GLITCH if active
+  //-----------------------------------------
+  if (glitchActive) {
+    glitchTimer++;
+    applyGlitch();
+    if (glitchTimer > glitchDuration) {
+      glitchActive = false;
+      glitchTimer = 0;
+    }
+  }
 
-  //-----------------------------------------
-  // 4) FINAL GRAIN PASS
-  //-----------------------------------------
-  applyGrain(5); // ±5 brightness shift
+  //-----------------------------------------
+  // 4) FINAL GRAIN PASS
+  //-----------------------------------------
+  applyGrain(5); // ±5 brightness shift
 }
 
 //----------------------------------------------
 // META-BALL DRAWING (to blobLayer)
 //----------------------------------------------
 function drawMetaBalls(gfx) {
-  gfx.loadPixels();
+  gfx.loadPixels();
 
-  // Move each blob
-  for (let b of blobs) {
-    b.x += b.dx;
-    b.y += b.dy;
-    // Bounce off edges in the offscreen layer
-    if (b.x < 0 || b.x > layerW) b.dx *= -1;
-    if (b.y < 0 || b.y > layerH) b.dy *= -1;
-  }
+  // Move each blob
+  for (let b of blobs) {
+    b.x += b.dx;
+    b.y += b.dy;
+    // Bounce off edges in the offscreen layer
+    if (b.x < 0 || b.x > layerW) b.dx *= -1;
+    if (b.y < 0 || b.y > layerH) b.dy *= -1;
+  }
 
-  // Predefine pastel color sets & thresholds
-  let pastel1 = color(255, 230, 240); // Pinkish
-  let pastel2 = color(250, 240, 200); // Soft peach
-  let pastel3 = color(220, 230, 255); // Baby blue
-  let thresholds = [0.8, 2.0, 3.5]; // Tune these as needed
+  // Predefine pastel color sets & thresholds
+  let pastel1 = p.color(255, 230, 240); // Pinkish
+  let pastel2 = p.color(250, 240, 200); // Soft peach
+  let pastel3 = p.color(220, 230, 255); // Baby blue
+  let thresholds = [0.8, 2.0, 3.5]; // Tune these as needed
 
-  let d = gfx.p.pixelDensity();
-  for (let y = 0; y < gfx.height; y++) {
-    for (let x = 0; x < gfx.width; x++) {
-      let fieldValue = 0;
-      for (let b of blobs) {
-        let dx = x - b.x;
-        let dy = y - b.y;
-        let distSq = dx * dx + dy * dy;
-        if (distSq < 0.0001) distSq = 0.0001;
-        fieldValue += (b.r * b.r) / distSq;
-      }
+  let d = gfx.p.pixelDensity();
+  for (let y = 0; y < gfx.height; y++) {
+    for (let x = 0; x < gfx.width; x++) {
+      let fieldValue = 0;
+      for (let b of blobs) {
+        let dx = x - b.x;
+        let dy = y - b.y;
+        let distSq = dx * dx + dy * dy;
+        if (distSq < 0.0001) distSq = 0.0001;
+        fieldValue += (b.r * b.r) / distSq;
+      }
 
-      let c = color(255, 255, 255, 0);
-      if (fieldValue > thresholds[0]) c = pastel1;
-      if (fieldValue > thresholds[1]) c = pastel2;
-      if (fieldValue > thresholds[2]) c = pastel3;
+      let c = p.color(255, 255, 255, 0);
+      if (fieldValue > thresholds[0]) c = pastel1;
+      if (fieldValue > thresholds[1]) c = pastel2;
+      if (fieldValue > thresholds[2]) c = pastel3;
 
-      let index = 4 * (x + y * gfx.width) * d * d;
-      gfx.pixels[index + 0] = red(c);
-      gfx.pixels[index + 1] = green(c);
-      gfx.pixels[index + 2] = blue(c);
-      gfx.pixels[index + 3] = alpha(c) ? alpha(c) : 255;
-    }
-  }
-  gfx.updatePixels();
+      let index = 4 * (x + y * gfx.width) * d * d;
+      gfx.pixels[index + 0] = p.red(c);
+      gfx.pixels[index + 1] = p.green(c);
+      gfx.pixels[index + 2] = p.blue(c);
+      gfx.pixels[index + 3] = p.alpha(c) ? p.alpha(c) : 255;
+    }
+  }
+  gfx.updatePixels();
 }
 
 //----------------------------------------------
 // DRAW ARTISTIC TEXT on textLayer with mobile wrapping
 //----------------------------------------------
 function drawArtText() {
-  // Clear text layer each frame
-  textLayer.clear();
+  // Clear text layer each frame
+  textLayer.clear();
 
-  // Enable word wrapping
-  textLayer.textWrap(WORD);
+  // Enable word wrapping
+  textLayer.textWrap(p.WORD);
 
-  // Set text properties
-  textLayer.p.fill(40, 30, 30, questionAlpha);
-  textLayer.textAlign(CENTER, CENTER);
-  textLayer.textSize(min(width, height) * 0.06);
+  // Set text properties
+  textLayer.fill(40, 30, 30, questionAlpha);
+  textLayer.textAlign(p.CENTER, p.CENTER);
+  textLayer.textSize(p.min(p.width, p.height) * 0.06);
 
-  // Draw the question within a bounding box so it stacks on small screens:
-  // left margin = width * 0.1, available width = width * 0.8,
-  // starting at height * 0.3, with available height = height * 0.4.
-  textLayer.text(question, width * 0.1, height * 0.3, width * 0.8, height * 0.4);
+  // Draw the question within a bounding box so it stacks on small screens:
+  // left margin = width * 0.1, available width = width * 0.8,
+  // starting at height * 0.3, with available height = height * 0.4.
+  textLayer.text(question, p.width * 0.1, p.height * 0.3, p.width * 0.8, p.height * 0.4);
 
-  // Blur the text for a dreamy edge
-  textLayer.filter(BLUR, 2);
+  // Blur the text for a dreamy edge
+  textLayer.filter(p.BLUR, 2);
 
-  // Dither the text for a digital artifact vibe
-  applyBayerDither(textLayer);
+  // Dither the text for a digital artifact vibe
+  applyBayerDither(textLayer);
 
-  // Blend it onto the main canvas
-  push();
-  blendMode(MULTIPLY);
-  p.image(textLayer, 0, 0);
-  pop();
+  // Blend it onto the main canvas
+  p.push();
+  p.blendMode(p.MULTIPLY);
+  p.image(textLayer, 0, 0);
+  p.pop();
 }
 
 //----------------------------------------------
 // FADE LOGIC FOR SINGLE QUESTION
 //----------------------------------------------
 function updateQuestionFade() {
-  // Only fade in once
-  if (questionFadingIn) {
-    questionAlpha += 4;
-    if (questionAlpha >= 255) {
-      questionAlpha = 255;
-      questionFadingIn = false;
-    }
-  }
+  // Only fade in once
+  if (questionFadingIn) {
+    questionAlpha += 4;
+    if (questionAlpha >= 255) {
+      questionAlpha = 255;
+      questionFadingIn = false;
+    }
+  }
 }
 
 //----------------------------------------------
 // SIMPLE BAYER DITHER (applied to a p5.Graphics)
 //----------------------------------------------
 function applyBayerDither(gfx) {
-  gfx.loadPixels();
-  let d = gfx.p.pixelDensity();
+  gfx.loadPixels();
+  let d = gfx.p.pixelDensity();
 
-  // 4x4 Bayer matrix
-  let bayer = [
-    [1, 9, 3, 11],
-    [13, 5, 15, 7],
-    [4, 12, 2, 10],
-    [16, 8, 14, 6]
-  ];
+  // 4x4 Bayer matrix
+  let bayer = [
+    [1, 9, 3, 11],
+    [13, 5, 15, 7],
+    [4, 12, 2, 10],
+    [16, 8, 14, 6]
+  ];
 
-  for (let y = 0; y < gfx.height; y++) {
-    for (let x = 0; x < gfx.width; x++) {
-      let index = 4 * (x + y * gfx.width) * d * d;
-      let r = gfx.pixels[index + 0];
-      let g = gfx.pixels[index + 1];
-      let b = gfx.pixels[index + 2];
-      let a = gfx.pixels[index + 3];
+  for (let y = 0; y < gfx.height; y++) {
+    for (let x = 0; x < gfx.width; x++) {
+      let index = 4 * (x + y * gfx.width) * d * d;
+      let r = gfx.pixels[index + 0];
+      let g = gfx.pixels[index + 1];
+      let b = gfx.pixels[index + 2];
+      let a = gfx.pixels[index + 3];
 
-      if (a < 1) continue; // Skip fully transparent pixels
+      if (a < 1) continue; // Skip fully transparent pixels
 
-      let brightnessVal = (r + g + b) / 3.0;
-      let threshold = (bayer[x % 4][y % 4] / 17) * 255;
+      let brightnessVal = (r + g + b) / 3.0;
+      let threshold = (bayer[x % 4][y % 4] / 17) * 255;
 
-      if (brightnessVal < threshold) {
-        // Push color toward a soft background
-        gfx.pixels[index + 0] = lerp(r, 245, 0.6);
-        gfx.pixels[index + 1] = lerp(g, 240, 0.6);
-        gfx.pixels[index + 2] = lerp(b, 235, 0.6);
-      }
-    }
-  }
-  gfx.updatePixels();
+      if (brightnessVal < threshold) {
+        // Push color toward a soft background
+        gfx.pixels[index + 0] = p.lerp(r, 245, 0.6);
+        gfx.pixels[index + 1] = p.lerp(g, 240, 0.6);
+        gfx.pixels[index + 2] = p.lerp(b, 235, 0.6);
+      }
+    }
+  }
+  gfx.updatePixels();
 }
 
 //----------------------------------------------
 // GLITCH (R/G/B channel offset) on main canvas
 //----------------------------------------------
 function applyGlitch() {
-  let snapshot = get();
-  let offset = 6;
+  let snapshot = p.get();
+  let offset = 6;
 
-  // Red
-  tint(255, 0, 0);
-  p.image(snapshot, random(-offset, offset), random(-offset, offset));
+  // Red
+  p.tint(255, 0, 0);
+  p.image(snapshot, p.random(-offset, offset), p.random(-offset, offset));
 
-  // Green
-  tint(0, 255, 0, 180);
-  p.image(snapshot, random(-offset, offset), random(-offset, offset));
+  // Green
+  p.tint(0, 255, 0, 180);
+  p.image(snapshot, p.random(-offset, offset), p.random(-offset, offset));
 
-  // Blue
-  tint(0, 0, 255, 180);
-  p.image(snapshot, random(-offset, offset), random(-offset, offset));
+  // Blue
+  p.tint(0, 0, 255, 180);
+  p.image(snapshot, p.random(-offset, offset), p.random(-offset, offset));
 
-  tint(255);
+  p.tint(255);
 }
 
 //----------------------------------------------
 // FINAL GRAIN PASS
 //----------------------------------------------
 function applyGrain(strength) {
-  loadPixels();
-  for (let i = 0; i < pixels.length; i += 4) {
-    let amt = random(-strength, strength);
-    pixels[i + 0] += amt; // R
-    pixels[i + 1] += amt; // G
-    pixels[i + 2] += amt; // B
-  }
-  updatePixels();
+  p.loadPixels();
+  for (let i = 0; i < p.pixels.length; i += 4) {
+    let amt = p.random(-strength, strength);
+    p.pixels[i + 0] += amt; // R
+    p.pixels[i + 1] += amt; // G
+    p.pixels[i + 2] += amt; // B
+  }
+  p.updatePixels();
 }
 
 //----------------------------------------------
 // CLICK/TAP => GLITCH ONLY
 //----------------------------------------------
-function mousePressed() {
-  glitchActive = true;
-  glitchTimer = 0;
+p.mousePressed = function() {
+  glitchActive = true;
+  glitchTimer = 0;
 }
 
-function touchStarted() {
-  glitchActive = true;
-  glitchTimer = 0;
+p.touchStarted = function() {
+  glitchActive = true;
+  glitchTimer = 0;
   return false;
 }
 
 //----------------------------------------------
 // RESIZE
 //----------------------------------------------
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-  layerW = floor(width / 2);
-  layerH = floor(height / 2);
-  blobLayer = createGraphics(layerW, layerH);
-  textLayer = createGraphics(width, height);
-  textLayer.noSmooth();
+p.windowResized = function() {
+  p.resizeCanvas(p.windowWidth, p.windowHeight);
+  layerW = p.floor(p.width / 2);
+  layerH = p.floor(p.height / 2);
+  blobLayer = p.createGraphics(layerW, layerH);
+  textLayer = p.createGraphics(p.width, p.height);
+  textLayer.noSmooth();
 
-  textSize(min(width, height) * 0.06);
+  p.textSize(p.min(p.width, p.height) * 0.06);
 }
 
 };
