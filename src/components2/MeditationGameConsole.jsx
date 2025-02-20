@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import dynamic from "next/dynamic";
 import styles from "./MeditationGameConsole.module.css";
 
-// DYNAMIC IMPORTS OF ANIMATIONS (Updated to align with @p5-wrapper/react)
+// DYNAMIC IMPORTS OF ANIMATIONS
 const Slide2Animation = dynamic(() => import("@/meditationanimations/slide2limitlessselfprotocolanimationscript"), { ssr: false });
 const Slide3Animation = dynamic(() => import("@/meditationanimations/slide3limitlessselfprotocolanimationscript"), { ssr: false });
 const Slide4Animation = dynamic(() => import("@/meditationanimations/slide4limitlessselfprotocolanimationscript"), { ssr: false });
@@ -15,7 +15,6 @@ const Slide7Animation = dynamic(() => import("@/meditationanimations/slide7limit
 const Slide8Animation = dynamic(() => import("@/meditationanimations/slide8limitlessselfprotocolanimationscript"), { ssr: false });
 const Slide10Animation = dynamic(() => import("@/meditationanimations/slide10limitlessselfprotocolanimationscript"), { ssr: false });
 
-// SLIDE DATA:
 const slides = [
   { id: 1, text: "Are you willing and ready to connect with the limitless self?", type: "buttons", hasScreen: false },
   { id: 2, text: "Swipe up to call up the limitless self.", type: "swipe", hasScreen: true, animation: <Slide2Animation /> },
@@ -49,6 +48,13 @@ export default function MeditationGameConsole() {
 
   const handleYesClick = () => {
     setYesClicked(true);
+    setTimeout(() => {
+      const btn = document.querySelector(`.${styles.yesButton}`);
+      if (btn) {
+        btn.classList.add(styles.active);
+        setTimeout(() => btn.classList.remove(styles.active), 2000);
+      }
+    }, 0);
   };
 
   const slide = slides[currentSlide];
@@ -62,6 +68,24 @@ export default function MeditationGameConsole() {
           <div className={`${styles.led} ${styles.yellow}`} />
           <div className={`${styles.led} ${styles.green}`} />
         </div>
+
+        {/* Rainbow Loader for Slide 1 */}
+        {currentSlide === 0 && (
+          <div className={styles.loader}>
+            <span></span>
+          </div>
+        )}
+
+        {/* Quatrefoil Loader for Slide 9 */}
+        {currentSlide === 8 && (
+          <div className={styles.preloader}>
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className={styles.preloaderSquare}>
+                <div className={styles.quatrefoil}></div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Animation Screen */}
         {slide.hasScreen && (
@@ -80,32 +104,35 @@ export default function MeditationGameConsole() {
         {/* Buttons */}
         {slide.type === "buttons" && (
           <div className={styles.buttonContainer}>
-            <button className={`${styles.button} ${styles.yesButton}`} onClick={handleYesClick}>
+            <button 
+              className={`${styles.button} ${styles.yesButton} ${yesClicked ? styles.active : ''}`} 
+              onClick={handleYesClick}
+            >
               {slide.customButton || "Yes"}
             </button>
-            <button className={`${styles.button} ${styles.noButton}`} onClick={nextSlide}>
-              No
-            </button>
+            {!slide.customButton && (
+              <button className={`${styles.button} ${styles.noButton}`}>
+                No
+              </button>
+            )}
           </div>
         )}
 
         {/* Navigation Buttons */}
-        {slide.type !== "buttons" && (
-          <div className={styles.navButtonContainer}>
-            {currentSlide > 0 && (
-              <button className={styles.navButton} onClick={prevSlide}>
-                <ChevronLeft size={20} />
-                Previous
-              </button>
-            )}
-            {currentSlide < slides.length - 1 && (
-              <button className={styles.navButton} onClick={nextSlide}>
-                Next
-                <ChevronRight size={20} />
-              </button>
-            )}
-          </div>
-        )}
+        <div className={styles.navButtonContainer}>
+          {currentSlide > 0 && (
+            <button className={styles.navButton} onClick={prevSlide}>
+              <ChevronLeft size={20} />
+              <span>Previous</span>
+            </button>
+          )}
+          {currentSlide < slides.length - 1 && (
+            <button className={styles.navButton} onClick={nextSlide}>
+              <span>Next</span>
+              <ChevronRight size={20} />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
