@@ -23,13 +23,12 @@ const sketch = (p) => {
       h = 600;
     }
     
-    // Create the canvas and center it in the container
+    // Create the canvas without absolute positioning
     const canvas = p.createCanvas(w, h);
-    const canvasElement = canvas.elt;
-    canvasElement.style.position = 'absolute';
-    canvasElement.style.left = '50%';
-    canvasElement.style.top = '50%';
-    canvasElement.style.transform = 'translate(-50%, -50%)';
+    // Make canvas fill its container
+    canvas.elt.style.width = '100%';
+    canvas.elt.style.height = '100%';
+    canvas.elt.style.display = 'block';
 
     p.pixelDensity(1);
     p.noStroke();
@@ -37,22 +36,7 @@ const sketch = (p) => {
     generateNoiseTexture();
   };
 
-  // ... rest of your animation code stays the same ...
-
-  p.windowResized = () => {
-    const container = document.querySelector('.animationScreen');
-    if (container) {
-      p.resizeCanvas(container.offsetWidth, container.offsetHeight);
-      const canvasElement = p.canvas.elt;
-      canvasElement.style.position = 'absolute';
-      canvasElement.style.left = '50%';
-      canvasElement.style.top = '50%';
-      canvasElement.style.transform = 'translate(-50%, -50%)';
-      
-      noiseGraphics = p.createGraphics(p.width, p.height);
-      generateNoiseTexture();
-    }
-  };
+  // Rest of your animation code stays the same
 
   p.draw = () => {
     drawBackgroundGradient();
@@ -194,5 +178,15 @@ const sketch = (p) => {
     startY = p.mouseY;
   };
 
-
+  p.windowResized = () => {
+    const container = document.querySelector('.animationScreen');
+    if (container) {
+      p.resizeCanvas(container.offsetWidth, container.offsetHeight);
+      // Update canvas styles to fill container
+      p.canvas.elt.style.width = '100%';
+      p.canvas.elt.style.height = '100%';
+      noiseGraphics = p.createGraphics(p.width, p.height);
+      generateNoiseTexture();
+    }
+  };
 };
