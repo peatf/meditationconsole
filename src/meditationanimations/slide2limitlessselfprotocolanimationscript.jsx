@@ -12,21 +12,46 @@ const sketch = (p) => {
   let noiseGraphics;
   
   p.setup = () => {
-    // First create a default canvas
-    const defaultWidth = 800;
-    const defaultHeight = 600;
-    p.createCanvas(defaultWidth, defaultHeight);
-
-    // Then try to resize it to the container size
     const container = document.querySelector('.animationScreen');
+    let w, h;
+    
     if (container) {
-      p.resizeCanvas(container.offsetWidth, container.offsetHeight);
+      w = container.offsetWidth;
+      h = container.offsetHeight;
+    } else {
+      w = 800;
+      h = 600;
     }
+    
+    // Create the canvas and center it in the container
+    const canvas = p.createCanvas(w, h);
+    const canvasElement = canvas.elt;
+    canvasElement.style.position = 'absolute';
+    canvasElement.style.left = '50%';
+    canvasElement.style.top = '50%';
+    canvasElement.style.transform = 'translate(-50%, -50%)';
 
     p.pixelDensity(1);
     p.noStroke();
-    noiseGraphics = p.createGraphics(p.width, p.height);
+    noiseGraphics = p.createGraphics(w, h);
     generateNoiseTexture();
+  };
+
+  // ... rest of your animation code stays the same ...
+
+  p.windowResized = () => {
+    const container = document.querySelector('.animationScreen');
+    if (container) {
+      p.resizeCanvas(container.offsetWidth, container.offsetHeight);
+      const canvasElement = p.canvas.elt;
+      canvasElement.style.position = 'absolute';
+      canvasElement.style.left = '50%';
+      canvasElement.style.top = '50%';
+      canvasElement.style.transform = 'translate(-50%, -50%)';
+      
+      noiseGraphics = p.createGraphics(p.width, p.height);
+      generateNoiseTexture();
+    }
   };
 
   p.draw = () => {
@@ -176,4 +201,17 @@ const sketch = (p) => {
     energyLevel = p.constrain(energyLevel, 0, 1);
     startY = p.mouseY;
   };
-};
+ p.windowResized = () => {
+    const container = document.querySelector('.animationScreen');
+    if (container) {
+      p.resizeCanvas(container.offsetWidth, container.offsetHeight);
+      const canvasElement = p.canvas.elt;
+      canvasElement.style.position = 'absolute';
+      canvasElement.style.left = '50%';
+      canvasElement.style.top = '50%';
+      canvasElement.style.transform = 'translate(-50%, -50%)';
+      
+      noiseGraphics = p.createGraphics(p.width, p.height);
+      generateNoiseTexture();
+    }
+  };
