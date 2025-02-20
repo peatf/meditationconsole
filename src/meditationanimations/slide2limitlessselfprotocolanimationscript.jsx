@@ -5,178 +5,171 @@ export default function Slide2Animation() {
   return <ReactP5Wrapper sketch={sketch} />;
 }
 
-
-
-let energyLevel = 0;
-let waves = [];
-let startY = 0;
-let noiseGraphics;
-
 const sketch = (p) => {
-    p.setup = function() {
-  p.createCanvas(windowWidth, windowHeight);
-  p.pixelDensity(1);
-  p.noStroke();
-  noiseGraphics = createGraphics(width, height);
-  generateNoiseTexture();
-}
-
-    p.draw = function() {
-  // --- Beige Background Gradient ---
-  drawBackgroundGradient();
-
-  // --- Create New Waves ---
-  if (p.frameCount % (60 - map(energyLevel, 0, 1, 10, 50)) === 0) {
-    waves.push(new Wave());
-  }
-
-  // --- Update and Display Waves ---
-  for (let i = waves.length - 1; i >= 0; i--) {
-    waves[i].update();
-    waves[i].display();
-    if (waves[i].isFinished()) {
-      waves.splice(i, 1);
+  let energyLevel = 0;
+  let waves = [];
+  let startY = 0;
+  let noiseGraphics;
+  
+  p.setup = () => {
+    // Get the parent container's dimensions
+    const canvas = document.querySelector('.animationScreen');
+    if (canvas) {
+      p.createCanvas(canvas.offsetWidth, canvas.offsetHeight);
+    } else {
+      p.createCanvas(400, 400); // Fallback size
     }
-  }
+    p.pixelDensity(1);
+    p.noStroke();
+    noiseGraphics = p.createGraphics(p.width, p.height);
+    generateNoiseTexture();
+  };
 
-  // --- Apply Noise Texture (as an overlay) ---
-  blendMode(OVERLAY);
-  p.image(noiseGraphics, 0, 0);
-  blendMode(BLEND);
+  p.draw = () => {
+    drawBackgroundGradient();
 
-  // --- Grain Effect (Post-Processing) ---
-  loadPixels();
-  for (let i = 0; i < pixels.length; i += 4) {
-    let grain = random(-10, 10);
-    pixels[i] += grain;
-    pixels[i + 1] += grain;
-    pixels[i + 2] += grain;
-  }
-  updatePixels();
+    if (p.frameCount % (60 - p.map(energyLevel, 0, 1, 10, 50)) === 0) {
+      waves.push(new Wave());
+    }
 
-  // --- Subtle Blur ---
-  filter(BLUR, 0.75); // Adjust value (0.5 - 1.5) as needed.
-}
-
-// --- Wave Class ---
-class Wave {
-  constructor() {
-    this.radius = 0;
-    this.speed = map(energyLevel, 0, 1, 1, 5);
-    this.brightness = map(energyLevel, 0, 1, 50, 255);
-    this.segments = 120;
-    this.glitchProbability = 0.01;
-    this.lifespan = 255;
-    this.noiseOffsetX = random(1000);
-    this.noiseOffsetY = random(1000);
-  }
-
-  update() {
-    this.radius += this.speed;
-    this.lifespan -= 1;
-  }
-
-  isFinished() {
-    return this.lifespan < 0;
-  }
-
-  display() {
-    // --- More Yellowish Green ---
-    let baseColor = color(180, 220, 100, this.lifespan); // Increased red, kept green high, reduced blue
-    let darkBeige = color(100, 90, 70, this.lifespan); // Dark beige for fading
-
-    push();
-    translate(width / 2, height);
-
-    for (let i = 0; i < this.segments; i++) {
-      let angle = map(i, 0, this.segments, 0, TWO_PI);
-      let noiseX = this.noiseOffsetX + this.radius * 0.01 * cos(angle);
-      let noiseY = this.noiseOffsetY + this.radius * 0.01 * sin(angle);
-      let radiusOffset = noise(noiseX, noiseY, p.frameCount * 0.01) * 20;
-
-      let x = (this.radius + radiusOffset) * cos(angle);
-      let y = (this.radius + radiusOffset) * sin(angle);
-
-      let size = map(noise(i * 0.1, this.radius * 0.05), 0, 1, 2, 8);
-
-      // --- Color Variation (using noise) WITH darkBeige---
-        let inter = map(this.radius, 0, width, 0, 1); //interp value
-        let c = lerpColor(baseColor, darkBeige, inter); //interp between colors.
-
-      let colorOffset = noise(this.radius * 0.02, i * 0.05, p.frameCount * 0.01) * 50 - 25;
-      let r = constrain(red(c) + colorOffset, 0, 255);
-      let g = constrain(green(c) + colorOffset, 0, 255);
-      let b = constrain(blue(c) + colorOffset, 0, 255);
-      p.fill(r, g, b, this.lifespan);
-
-
-      if (random(1) < this.glitchProbability * energyLevel) {
-        x += random(-10, 10);
-        y += random(-10, 10);
-        p.fill(random(255), random(255), random(255));
+    for (let i = waves.length - 1; i >= 0; i--) {
+      waves[i].update();
+      waves[i].display();
+      if (waves[i].isFinished()) {
+        waves.splice(i, 1);
       }
-
-      ellipse(x, y, size, size);
     }
-    pop();
-  }
-}
 
-// --- Input Handling (Touch and Mouse) ---
-function touchStarted() {
-  startY = mouseY;
-  return false;
-}
+    p.blendMode(p.OVERLAY);
+    p.image(noiseGraphics, 0, 0);
+    p.blendMode(p.BLEND);
 
-function touchMoved() {
-  let deltaY = startY - mouseY;
-  energyLevel += deltaY * 0.002;
-  energyLevel = constrain(energyLevel, 0, 1);
-  startY = mouseY;
-  return false;
-}
+    p.loadPixels();
+    for (let i = 0; i < p.pixels.length; i += 4) {
+      let grain = p.random(-10, 10);
+      p.pixels[i] += grain;
+      p.pixels[i + 1] += grain;
+      p.pixels[i + 2] += grain;
+    }
+    p.updatePixels();
 
-function mousePressed() {
-  startY = mouseY;
-}
+    p.filter(p.BLUR, 0.75);
+  };
 
-function mouseDragged() {
-  let deltaY = startY - mouseY;
-  energyLevel += deltaY * 0.002;
-  energyLevel = constrain(energyLevel, 0, 1);
-  startY = mouseY;
-}
+  class Wave {
+    constructor() {
+      this.radius = 0;
+      this.speed = p.map(energyLevel, 0, 1, 1, 5);
+      this.brightness = p.map(energyLevel, 0, 1, 50, 255);
+      this.segments = 120;
+      this.glitchProbability = 0.01;
+      this.lifespan = 255;
+      this.noiseOffsetX = p.random(1000);
+      this.noiseOffsetY = p.random(1000);
+    }
 
-// --- Pre-generate Noise Texture ---
-function generateNoiseTexture() {
-  noiseGraphics.p.noStroke();
-  for (let x = 0; x < noiseGraphics.width; x++) {
-    for (let y = 0; y < noiseGraphics.height; y++) {
-      let noiseVal = noise(x * 0.05, y * 0.05);
-      let c = map(noiseVal, 0, 1, 100, 180); // Adjusted for beige tones
-      noiseGraphics.p.fill(c);
-      noiseGraphics.rect(x, y, 1, 1);
+    update() {
+      this.radius += this.speed;
+      this.lifespan -= 1;
+    }
+
+    isFinished() {
+      return this.lifespan < 0;
+    }
+
+    display() {
+      let baseColor = p.color(180, 220, 100, this.lifespan);
+      let darkBeige = p.color(100, 90, 70, this.lifespan);
+
+      p.push();
+      p.translate(p.width / 2, p.height);
+
+      for (let i = 0; i < this.segments; i++) {
+        let angle = p.map(i, 0, this.segments, 0, p.TWO_PI);
+        let noiseX = this.noiseOffsetX + this.radius * 0.01 * p.cos(angle);
+        let noiseY = this.noiseOffsetY + this.radius * 0.01 * p.sin(angle);
+        let radiusOffset = p.noise(noiseX, noiseY, p.frameCount * 0.01) * 20;
+
+        let x = (this.radius + radiusOffset) * p.cos(angle);
+        let y = (this.radius + radiusOffset) * p.sin(angle);
+
+        let size = p.map(p.noise(i * 0.1, this.radius * 0.05), 0, 1, 2, 8);
+
+        let inter = p.map(this.radius, 0, p.width, 0, 1);
+        let c = p.lerpColor(baseColor, darkBeige, inter);
+
+        let colorOffset = p.noise(this.radius * 0.02, i * 0.05, p.frameCount * 0.01) * 50 - 25;
+        let r = p.constrain(p.red(c) + colorOffset, 0, 255);
+        let g = p.constrain(p.green(c) + colorOffset, 0, 255);
+        let b = p.constrain(p.blue(c) + colorOffset, 0, 255);
+        p.fill(r, g, b, this.lifespan);
+
+        if (p.random(1) < this.glitchProbability * energyLevel) {
+          x += p.random(-10, 10);
+          y += p.random(-10, 10);
+          p.fill(p.random(255), p.random(255), p.random(255));
+        }
+
+        p.ellipse(x, y, size, size);
+      }
+      p.pop();
     }
   }
-}
 
-// --- Draw Beige Radial Gradient Background ---
-function drawBackgroundGradient() {
-  let backgroundColor1 = color(235, 225, 200); // Light Beige
-  let backgroundColor2 = color(215, 205, 180); // Darker Beige
+  const generateNoiseTexture = () => {
+    noiseGraphics.noStroke();
+    for (let x = 0; x < noiseGraphics.width; x++) {
+      for (let y = 0; y < noiseGraphics.height; y++) {
+        let noiseVal = p.noise(x * 0.05, y * 0.05);
+        let c = p.map(noiseVal, 0, 1, 100, 180);
+        noiseGraphics.fill(c);
+        noiseGraphics.rect(x, y, 1, 1);
+      }
+    }
+  };
 
-  for (let r = height; r > 0; r -= 2) {
-    let inter = map(r, 0, height, 1, 0);
-    let c = lerpColor(backgroundColor1, backgroundColor2, inter);
-    p.fill(c);
-    ellipse(width / 2, height, r * 2, r * 2);
-  }
-}
+  const drawBackgroundGradient = () => {
+    let backgroundColor1 = p.color(235, 225, 200);
+    let backgroundColor2 = p.color(215, 205, 180);
 
-// --- Resize Canvas on Window Resize ---
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-  noiseGraphics = createGraphics(width, height);
-  generateNoiseTexture();
-}
+    for (let r = p.height; r > 0; r -= 2) {
+      let inter = p.map(r, 0, p.height, 1, 0);
+      let c = p.lerpColor(backgroundColor1, backgroundColor2, inter);
+      p.fill(c);
+      p.ellipse(p.width / 2, p.height, r * 2, r * 2);
+    }
+  };
+
+  p.windowResized = () => {
+    const canvas = document.querySelector('.animationScreen');
+    if (canvas) {
+      p.resizeCanvas(canvas.offsetWidth, canvas.offsetHeight);
+      noiseGraphics = p.createGraphics(p.width, p.height);
+      generateNoiseTexture();
+    }
+  };
+
+  p.touchStarted = () => {
+    startY = p.mouseY;
+    return false;
+  };
+
+  p.touchMoved = () => {
+    let deltaY = startY - p.mouseY;
+    energyLevel += deltaY * 0.002;
+    energyLevel = p.constrain(energyLevel, 0, 1);
+    startY = p.mouseY;
+    return false;
+  };
+
+  p.mousePressed = () => {
+    startY = p.mouseY;
+  };
+
+  p.mouseDragged = () => {
+    let deltaY = startY - p.mouseY;
+    energyLevel += deltaY * 0.002;
+    energyLevel = p.constrain(energyLevel, 0, 1);
+    startY = p.mouseY;
+  };
 };
