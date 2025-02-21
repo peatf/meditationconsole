@@ -1,32 +1,34 @@
 "use client";
 import { ReactP5Wrapper } from "@p5-wrapper/react";
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 export default function Slide8Animation({ clickCount = 0 }) {
   const [opacity, setOpacity] = useState(0.15);
-  
+
   useEffect(() => {
-    setOpacity(0.15 + (clickCount * 0.17)); // This will reach close to 1 after 5 clicks
+    setOpacity(0.15 + clickCount * 0.17); // This will reach close to 1 after 5 clicks
   }, [clickCount]);
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <ReactP5Wrapper sketch={(p) => sketch(p)} />
-      <div style={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        color: '#fff',
-        fontFamily: 'monospace',
-        textAlign: 'center',
-        pointerEvents: 'none',
-        opacity: opacity,
-        zIndex: 1,
-        fontSize: '1.2rem',
-        maxWidth: '80%',
-        textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
-      }}>
+    <div className="animationScreen" style={{ position: "relative", width: "100%", height: "100%" }}>
+      <ReactP5Wrapper sketch={sketch} clickCount={clickCount} />
+      <div
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          color: "#fff",
+          fontFamily: "monospace",
+          textAlign: "center",
+          pointerEvents: "none",
+          opacity: opacity,
+          zIndex: 1,
+          fontSize: "1.2rem",
+          maxWidth: "80%",
+          textShadow: "2px 2px 4px rgba(0,0,0,0.5)"
+        }}
+      >
         I am willing to see the beauty and perfection in everything, exactly as it is.
       </div>
     </div>
@@ -41,6 +43,7 @@ const sketch = (p) => {
   let gradientScale = 1.0;
   let noiseScale = 0.5;
   let time = 0;
+  let prevClickCount = 0;
 
   const vert = `
     attribute vec3 aPosition;
@@ -147,7 +150,7 @@ const sketch = (p) => {
 
       float t = time * 0.5;
 
-      // Dynamic distortion
+      // Dynamic distortion using pulse
       float distortionStrength = 0.01 * pulse;
       uv.x += sin(uv.y * 8.0 + t) * distortionStrength;
       uv.y += cos(uv.x * 6.0 + t) * distortionStrength;
@@ -169,25 +172,25 @@ const sketch = (p) => {
 
   p.setup = () => {
     // Create canvas and get container dimensions
-    const container = document.querySelector('.animationScreen');
+    const container = document.querySelector(".animationScreen");
     let w = container ? container.offsetWidth : 800;
     let h = container ? container.offsetHeight : 600;
     const canvas = p.createCanvas(w, h, p.WEBGL);
     
     // Center the canvas in the container
     const canvasElement = canvas.elt;
-    canvasElement.style.position = 'absolute';
-    canvasElement.style.left = '50%';
-    canvasElement.style.top = '50%';
-    canvasElement.style.transform = 'translate(-50%, -50%)';
+    canvasElement.style.position = "absolute";
+    canvasElement.style.left = "50%";
+    canvasElement.style.top = "50%";
+    canvasElement.style.transform = "translate(-50%, -50%)";
     
     try {
       shaderProgram = p.createShader(vert, frag);
       p.shader(shaderProgram);
       
       // Initialize shader uniforms
-      shaderProgram.setUniform('gradientScale', gradientScale);
-      shaderProgram.setUniform('noiseScale', noiseScale);
+      shaderProgram.setUniform("gradientScale", gradientScale);
+      shaderProgram.setUniform("noiseScale", noiseScale);
     } catch (e) {
       console.error("Error creating shader:", e);
     }
@@ -203,20 +206,20 @@ const sketch = (p) => {
       time = p.millis() / 1000;
       
       // Update shader uniforms
-      shaderProgram.setUniform('resolution', [p.width, p.height]);
-      shaderProgram.setUniform('time', time);
-      shaderProgram.setUniform('pulse', pulse);
-      shaderProgram.setUniform('gradientScale', gradientScale);
-      shaderProgram.setUniform('noiseScale', noiseScale);
+      shaderProgram.setUniform("resolution", [p.width, p.height]);
+      shaderProgram.setUniform("time", time);
+      shaderProgram.setUniform("pulse", pulse);
+      shaderProgram.setUniform("gradientScale", gradientScale);
+      shaderProgram.setUniform("noiseScale", noiseScale);
 
-      // Gradually reduce pulse
+      // Gradually reduce pulse so the effect fades out
       pulse = p.max(pulse - 0.02, 0);
       
       // Dynamic adjustments
       gradientScale = 1.0 + 0.2 * p.sin(time * 0.5);
       noiseScale = 0.5 + 0.2 * p.cos(time * 0.3);
 
-      // Render quad
+      // Render the quad covering the canvas
       p.quad(-1, -1, 1, -1, 1, 1, -1, 1);
 
     } catch (e) {
@@ -224,22 +227,29 @@ const sketch = (p) => {
     }
   };
 
+  // This updateWithProps method is called whenever the React props update.
+  // It checks if clickCount has increased and then triggers the pulse effect.
+  p.updateWithProps = (props) => {
+    if (props.clickCount !== undefined && props.clickCount > prevClickCount) {
+      pulse = 1.0;
+      prevClickCount = props.clickCount;
+    }
+  };
+
   p.windowResized = () => {
-    const container = document.querySelector('.animationScreen');
+    const container = document.querySelector(".animationScreen");
     if (container) {
       p.resizeCanvas(container.offsetWidth, container.offsetHeight);
     }
   };
 
-  // Handle mouse/touch interactions
+  // Optional: Also allow direct canvas interaction if desired.
   p.mousePressed = () => {
     pulse = 1.0;
-    textAlpha = p.min(textAlpha + 50, 255);
   };
 
   p.touchStarted = () => {
     pulse = 1.0;
-    textAlpha = p.min(textAlpha + 50, 255);
     return false;
   };
 
