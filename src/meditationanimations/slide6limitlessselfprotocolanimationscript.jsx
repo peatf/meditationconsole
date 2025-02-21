@@ -1,34 +1,42 @@
 "use client";
 import { ReactP5Wrapper } from "@p5-wrapper/react";
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 export default function Slide6Animation({ clickCount = 0 }) {
   const [opacity, setOpacity] = useState(0.15);
-  
+
+  // Increase text opacity with each click
   useEffect(() => {
-    setOpacity(0.15 + (clickCount * 0.17)); // This will reach close to 1 after 5 clicks
+    setOpacity(0.15 + clickCount * 0.17); // will reach near 1 after ~5 clicks
   }, [clickCount]);
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <ReactP5Wrapper sketch={(p) => sketch(p)} />
-      <div style={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        color: 'black',
-        fontFamily: 'monospace',
-        textAlign: 'center',
-        pointerEvents: 'none',
-        opacity: opacity,
-        zIndex: 1,
-        fontSize: '1.2rem',
-        maxWidth: '80%',
-        textShadow: '1px 1px 2px rgba(255,255,255,0.5)'
-      }}>
-        Do you feel ready and willing<br />
-        to agree with that perspective<br />
+    <div
+      className="animationScreen"
+      style={{ position: "relative", width: "100%", height: "100%" }}
+    >
+      <ReactP5Wrapper sketch={sketch} clickCount={clickCount} />
+      <div
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          color: "black",
+          fontFamily: "monospace",
+          textAlign: "center",
+          pointerEvents: "none",
+          opacity: opacity,
+          zIndex: 1,
+          fontSize: "1.2rem",
+          maxWidth: "80%",
+          textShadow: "1px 1px 2px rgba(255,255,255,0.5)"
+        }}
+      >
+        Do you feel ready and willing
+        <br />
+        to agree with that perspective
+        <br />
         about you right now?
       </div>
     </div>
@@ -38,7 +46,9 @@ export default function Slide6Animation({ clickCount = 0 }) {
 const sketch = (p) => {
   let shaderProgram;
   let pulse = 0;
+  let prevClickCount = 0;
 
+  // Vertex shader code
   const vert = `
     attribute vec3 aPosition;
     attribute vec2 aTexCoord;
@@ -49,6 +59,7 @@ const sketch = (p) => {
     }
   `;
 
+  // Fragment shader code
   const frag = `
     precision highp float;
     varying vec2 vTexCoord;
@@ -112,7 +123,7 @@ const sketch = (p) => {
 
     void main() {
       vec2 uv = vTexCoord;
-      uv.x *= resolution.x/resolution.y;
+      uv.x *= resolution.x / resolution.y;
       
       float t = time * 0.5;
       uv.x += sin(uv.y * 10.0 + t) * 0.01 * pulse;
@@ -140,19 +151,17 @@ const sketch = (p) => {
   `;
 
   p.setup = () => {
-    // Create canvas and get container dimensions
-    const container = document.querySelector('.animationScreen');
+    // Find container dimensions (using the "animationScreen" class)
+    const container = document.querySelector(".animationScreen");
     let w = container ? container.offsetWidth : 800;
     let h = container ? container.offsetHeight : 600;
     const canvas = p.createCanvas(w, h, p.WEBGL);
-    
-    // Center the canvas in the container
     const canvasElement = canvas.elt;
-    canvasElement.style.position = 'absolute';
-    canvasElement.style.left = '50%';
-    canvasElement.style.top = '50%';
-    canvasElement.style.transform = 'translate(-50%, -50%)';
-    
+    canvasElement.style.position = "absolute";
+    canvasElement.style.left = "50%";
+    canvasElement.style.top = "50%";
+    canvasElement.style.transform = "translate(-50%, -50%)";
+
     try {
       shaderProgram = p.createShader(vert, frag);
       p.shader(shaderProgram);
@@ -166,20 +175,30 @@ const sketch = (p) => {
     if (!shaderProgram) return;
     try {
       p.shader(shaderProgram);
-      shaderProgram.setUniform('resolution', [p.width, p.height]);
-      shaderProgram.setUniform('time', p.millis()/1000);
-      shaderProgram.setUniform('pulse', pulse);
-      
+      shaderProgram.setUniform("resolution", [p.width, p.height]);
+      shaderProgram.setUniform("time", p.millis() / 1000);
+      shaderProgram.setUniform("pulse", pulse);
+
+      // Gradually decay the pulse so the effect fades out
       pulse = p.max(pulse - 0.02, 0);
-      
+
       p.quad(-1, -1, 1, -1, 1, 1, -1, 1);
     } catch (e) {
       console.error("Error in draw:", e);
     }
   };
 
+  // This method is called whenever the React props update.
+  // It checks if clickCount has increased and then triggers the pulse.
+  p.updateWithProps = (props) => {
+    if (props.clickCount !== undefined && props.clickCount > prevClickCount) {
+      pulse = 1.0; // Trigger the pulse effect on click increase.
+      prevClickCount = props.clickCount;
+    }
+  };
+
   p.windowResized = () => {
-    const container = document.querySelector('.animationScreen');
+    const container = document.querySelector(".animationScreen");
     if (container) {
       p.resizeCanvas(container.offsetWidth, container.offsetHeight);
     }
