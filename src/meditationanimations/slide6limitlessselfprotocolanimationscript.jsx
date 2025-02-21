@@ -1,17 +1,17 @@
 "use client";
 import { ReactP5Wrapper } from "@p5-wrapper/react";
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Slide6Animation({ clickCount = 0 }) {
   const [opacity, setOpacity] = useState(0.15);
   
   useEffect(() => {
-    setOpacity(0.15 + (clickCount * 0.17)); // This will reach close to 1 after 5 clicks
+    setOpacity(0.15 + (clickCount * 0.17));
   }, [clickCount]);
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <ReactP5Wrapper sketch={(p) => sketch(p)} />
+      <ReactP5Wrapper sketch={sketch} clickCount={clickCount} />
       <div style={{
         position: 'absolute',
         top: '50%',
@@ -38,6 +38,7 @@ export default function Slide6Animation({ clickCount = 0 }) {
 const sketch = (p) => {
   let shaderProgram;
   let pulse = 0;
+  let lastClickCount = 0;
 
   const vert = `
     attribute vec3 aPosition;
@@ -140,13 +141,11 @@ const sketch = (p) => {
   `;
 
   p.setup = () => {
-    // Create canvas and get container dimensions
     const container = document.querySelector('.animationScreen');
     let w = container ? container.offsetWidth : 800;
     let h = container ? container.offsetHeight : 600;
     const canvas = p.createCanvas(w, h, p.WEBGL);
     
-    // Center the canvas in the container
     const canvasElement = canvas.elt;
     canvasElement.style.position = 'absolute';
     canvasElement.style.left = '50%';
@@ -164,7 +163,14 @@ const sketch = (p) => {
 
   p.draw = () => {
     if (!shaderProgram) return;
+    
     try {
+      // Check if clickCount has changed
+      if (p.props && p.props.clickCount > lastClickCount) {
+        pulse = 1.0;
+        lastClickCount = p.props.clickCount;
+      }
+
       p.shader(shaderProgram);
       shaderProgram.setUniform('resolution', [p.width, p.height]);
       shaderProgram.setUniform('time', p.millis()/1000);
