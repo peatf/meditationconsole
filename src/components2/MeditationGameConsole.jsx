@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import dynamic from "next/dynamic";
 import styles from "./MeditationGameConsole.module.css";
@@ -31,6 +31,8 @@ const slides = [
 export default function MeditationGameConsole() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [yesClicked, setYesClicked] = useState(false);
+  const [slide6Clicks, setSlide6Clicks] = useState(0);
+  const [slide8Clicks, setSlide8Clicks] = useState(0);
 
   const nextSlide = () => {
     if (currentSlide < slides.length - 1) {
@@ -48,6 +50,14 @@ export default function MeditationGameConsole() {
 
   const handleYesClick = () => {
     setYesClicked(true);
+    // Handle click counts for slides 6 and 8
+    if (currentSlide === 5) {
+      setSlide6Clicks(prev => Math.min(prev + 1, 5)); // Max 5 clicks
+    }
+    if (currentSlide === 7) {
+      setSlide8Clicks(prev => Math.min(prev + 1, 5)); // Max 5 clicks
+    }
+    
     setTimeout(() => {
       const btn = document.querySelector(`.${styles.yesButton}`);
       if (btn) {
@@ -57,7 +67,24 @@ export default function MeditationGameConsole() {
     }, 0);
   };
 
+  // Reset click counts when leaving respective slides
+  useEffect(() => {
+    if (currentSlide !== 5) setSlide6Clicks(0);
+    if (currentSlide !== 7) setSlide8Clicks(0);
+  }, [currentSlide]);
+
   const slide = slides[currentSlide];
+
+  // Update the animations array to include click counts
+  const getSlideAnimation = () => {
+    if (currentSlide === 5) {
+      return <Slide6Animation clickCount={slide6Clicks} />;
+    }
+    if (currentSlide === 7) {
+      return <Slide8Animation clickCount={slide8Clicks} />;
+    }
+    return slide.animation;
+  };
 
   return (
     <div className={styles.container}>
@@ -91,7 +118,9 @@ export default function MeditationGameConsole() {
         {slide.hasScreen && (
           <div className={styles.animationScreen}>
             {slide.animation ? (
-              <div className={styles.animationContainer}>{slide.animation}</div>
+              <div className={styles.animationContainer}>
+                {getSlideAnimation()}
+              </div>
             ) : (
               <p className={styles.animationPlaceholder}>(Animation Space)</p>
             )}
