@@ -17,6 +17,16 @@
   box-shadow: -8px -4px 12px rgba(255, 255, 250, 0.8),
     8px 4px 16px rgba(166, 167, 161, 0.3);
   position: relative;
+ background: linear-gradient(
+    135deg,
+    #E8E9E3,
+    #e0e1db
+  );
+  box-shadow: 
+    -8px -4px 12px rgba(255, 255, 250, 0.8),
+    8px 4px 16px rgba(166, 167, 161, 0.3),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.2),
+    inset -2px -2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* LED styles */
@@ -35,6 +45,8 @@
   position: relative;
   opacity: 0.8;
   transition: all 0.3s ease;
+  animation: pulse 2s infinite ease-in-out; /* Add this line */
+  box-shadow: 0 0 15px currentColor; /* Add this line */
 }
 
 .led::before {
@@ -82,6 +94,17 @@
 .led.green::before {
   box-shadow: 0 0 8px rgba(46, 204, 113, 0.3);
 }
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
 
 /* Rainbow loader */
 .loader {
