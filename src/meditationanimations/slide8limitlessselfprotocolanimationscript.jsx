@@ -25,11 +25,10 @@ export default function Slide8Animation({ clickCount = 0 }) {
           opacity: opacity,
           zIndex: 1,
           fontSize: "1.2rem",
-          maxWidth: "80%",
-          textShadow: "2px 2px 4px rgba(0,0,0,0.5)"
+          maxWidth: "80%"
         }}
       >
-        I am willing to see the beauty and perfection in everything, exactly as it is.
+        I am seeing my current reality through the lens of my non-physical self.
       </div>
     </div>
   );
