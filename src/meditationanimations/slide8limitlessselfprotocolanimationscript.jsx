@@ -1,15 +1,55 @@
 "use client";
 import { ReactP5Wrapper } from "@p5-wrapper/react";
+import { useEffect, useState } from 'react';
 
 export default function Slide8Animation({ onYesClick }) {
-  return <ReactP5Wrapper sketch={(p) => sketch(p, onYesClick)} />;
+  const [opacity, setOpacity] = useState(0.15);
+  
+  useEffect(() => {
+    const handleAffirm = () => {
+      setOpacity(prev => Math.min(prev + 0.2, 1));
+    };
+
+    // Listen for clicks on the Affirm button
+    const affirmButton = document.querySelector('[class*="yesButton"]');
+    if (affirmButton) {
+      affirmButton.addEventListener('click', handleAffirm);
+    }
+
+    return () => {
+      if (affirmButton) {
+        affirmButton.removeEventListener('click', handleAffirm);
+      }
+    };
+  }, []);
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <ReactP5Wrapper sketch={(p) => sketch(p, onYesClick)} />
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        color: '#fff',
+        fontFamily: 'monospace',
+        textAlign: 'center',
+        pointerEvents: 'none',
+        opacity: opacity,
+        zIndex: 1,
+        fontSize: '1.2rem',
+        maxWidth: '80%',
+        textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+      }}>
+        I am willing to see the beauty and perfection in everything, exactly as it is.
+      </div>
+    </div>
+  );
 }
 
 const sketch = (p, onYesClick) => {
-  // Global variables for text opacity (0–255) and pulse effect
   let textAlpha = 0;
   let pulse = 0;
-
   let shaderProgram;
 
   const vert = `
