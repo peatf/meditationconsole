@@ -35,7 +35,7 @@
   top: 1rem;
   left: 1rem;
   display: flex;
-  gap: 0.75rem;
+  gap: 1.5rem; /* Increased from your 0.75rem for more spacing */
 }
 
 .led {
@@ -43,65 +43,59 @@
   height: 8px;
   border-radius: 50%;
   position: relative;
-  opacity: 0.8;
-  transition: all 0.3s ease;
-  animation: pulse 2s infinite ease-in-out; /* Add this line */
-  box-shadow: 0 0 15px currentColor; /* Add this line */
-}
-
-.led::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 50%;
-  background: transparent;
-  z-index: -1;
-  transition: all 0.3s ease;
-}
-
-.led::after {
-  content: '';
-  position: absolute;
-  width: 3px;
-  height: 3px;
-  top: 1px;
-  left: 1px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.4);
-  filter: blur(0.5px);
 }
 
 .led.red {
-  background: radial-gradient(circle at 30% 30%, rgba(255, 107, 107, 0.8), rgba(231, 76, 60, 0.6));
-}
-
-.led.red::before {
-  box-shadow: 0 0 8px rgba(231, 76, 60, 0.3);
+  background-color: rgba(255, 100, 100, 0.8);
+  box-shadow: 
+    0 0 10px rgba(255, 100, 100, 0.8),
+    0 0 20px rgba(255, 100, 100, 0.8),
+    0 0 30px rgba(255, 100, 100, 0.4),
+    inset 0 0 8px rgba(255, 255, 255, 0.6);
+  animation: pulse 2.5s infinite ease-in-out;
 }
 
 .led.yellow {
-  background: radial-gradient(circle at 30% 30%, rgba(255, 217, 61, 0.8), rgba(241, 196, 15, 0.6));
-}
-
-.led.yellow::before {
-  box-shadow: 0 0 8px rgba(241, 196, 15, 0.3);
+  background-color: rgba(100, 255, 150, 0.8);
+  box-shadow: 
+    0 0 10px rgba(100, 255, 150, 0.8),
+    0 0 20px rgba(100, 255, 150, 0.8),
+    0 0 30px rgba(100, 255, 150, 0.4),
+    inset 0 0 8px rgba(255, 255, 255, 0.6);
+  animation: pulse 3s infinite ease-in-out;
 }
 
 .led.green {
-  background: radial-gradient(circle at 30% 30%, rgba(108, 224, 108, 0.8), rgba(46, 204, 113, 0.6));
+  background-color: rgba(100, 200, 255, 0.8);
+  box-shadow: 
+    0 0 10px rgba(100, 200, 255, 0.8),
+    0 0 20px rgba(100, 200, 255, 0.8),
+    0 0 30px rgba(100, 200, 255, 0.4),
+    inset 0 0 8px rgba(255, 255, 255, 0.6);
+  animation: pulse 3.5s infinite ease-in-out;
 }
 
-.led.green::before {
-  box-shadow: 0 0 8px rgba(46, 204, 113, 0.3);
+/* Add the highlight effect inside each LED */
+.led::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(255, 255, 255, 0.9),
+    transparent
+  );
+  opacity: 0.6;
 }
 @keyframes pulse {
   0%, 100% {
-    opacity: 0.8;
     transform: scale(1);
+    opacity: 0.8;
   }
   50% {
-    opacity: 1;
     transform: scale(1.1);
+    opacity: 1;
   }
 }
 
