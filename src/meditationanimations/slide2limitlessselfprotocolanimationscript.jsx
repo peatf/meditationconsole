@@ -10,22 +10,25 @@ const sketch = (p) => {
   let waves = [];
   let startY = 0;
   let noiseGraphics;
-  let container;
 
   p.setup = () => {
-    container = document.querySelector('.animationScreen');
+    const container = document.querySelector(".animationScreen");
     let w, h;
     if (container) {
-      w = container.clientWidth;
-      h = container.clientHeight;
+      w = container.offsetWidth;
+      h = container.offsetHeight;
     } else {
-      w = window.innerWidth;
-      h = window.innerHeight;
+      w = 800;
+      h = 600;
     }
     const canvas = p.createCanvas(w, h);
-    if (container) {
-      canvas.parent(container);
-    }
+    // Absolute centering as in your OG code
+    const canvasElement = canvas.elt;
+    canvasElement.style.position = "absolute";
+    canvasElement.style.left = "50%";
+    canvasElement.style.top = "50%";
+    canvasElement.style.transform = "translate(-50%, -50%)";
+
     p.pixelDensity(1);
     p.noStroke();
     noiseGraphics = p.createGraphics(w, h);
@@ -35,7 +38,10 @@ const sketch = (p) => {
   p.draw = () => {
     drawBackgroundGradient();
 
-    if (p.frameCount % (60 - p.map(energyLevel, 0, 1, 10, 50)) === 0) {
+    if (
+      p.frameCount % (60 - p.map(energyLevel, 0, 1, 10, 50)) ===
+      0
+    ) {
       waves.push(new Wave());
     }
     for (let i = waves.length - 1; i >= 0; i--) {
@@ -46,7 +52,7 @@ const sketch = (p) => {
       }
     }
 
-    p.blendMode(p.SCREEN);
+    p.blendMode(p.OVERLAY);
     p.image(noiseGraphics, 0, 0);
     p.blendMode(p.BLEND);
 
@@ -84,22 +90,34 @@ const sketch = (p) => {
       let darkBeige = p.color(100, 90, 70, this.lifespan);
 
       p.push();
-      // Shift upward to 80% of the canvas height
-      p.translate(p.width / 2, p.height * 0.8);
-      // Scale horizontally to reduce the overall width
-      p.scale(0.85, 1);
+      // Center the waves at the bottom of the canvas
+      p.translate(p.width / 2, p.height);
       for (let i = 0; i < this.segments; i++) {
         let angle = p.map(i, 0, this.segments, 0, p.TWO_PI);
-        let noiseX = this.noiseOffsetX + this.radius * 0.01 * p.cos(angle);
-        let noiseY = this.noiseOffsetY + this.radius * 0.01 * p.sin(angle);
-        let radiusOffset = p.noise(noiseX, noiseY, p.frameCount * 0.01) * 20;
+        let noiseX =
+          this.noiseOffsetX + this.radius * 0.01 * p.cos(angle);
+        let noiseY =
+          this.noiseOffsetY + this.radius * 0.01 * p.sin(angle);
+        let radiusOffset =
+          p.noise(noiseX, noiseY, p.frameCount * 0.01) * 20;
         let x = (this.radius + radiusOffset) * p.cos(angle);
         let y = (this.radius + radiusOffset) * p.sin(angle);
-        let size = p.map(p.noise(i * 0.1, this.radius * 0.05), 0, 1, 2, 8);
+        let size = p.map(
+          p.noise(i * 0.1, this.radius * 0.05),
+          0,
+          1,
+          2,
+          8
+        );
 
         let inter = p.map(this.radius, 0, p.width, 0, 1);
         let c = p.lerpColor(baseColor, darkBeige, inter);
-        let colorOffset = p.noise(this.radius * 0.02, i * 0.05, p.frameCount * 0.01) * 50 - 25;
+        let colorOffset =
+          p.noise(
+            this.radius * 0.02,
+            i * 0.05,
+            p.frameCount * 0.01
+          ) * 50 - 25;
         let r = p.constrain(p.red(c) + colorOffset, 0, 255);
         let g = p.constrain(p.green(c) + colorOffset, 0, 255);
         let b = p.constrain(p.blue(c) + colorOffset, 0, 255);
@@ -120,31 +138,31 @@ const sketch = (p) => {
     noiseGraphics.noStroke();
     for (let x = 0; x < noiseGraphics.width; x++) {
       for (let y = 0; y < noiseGraphics.height; y++) {
-        let noiseVal = p.noise(x * 0.07, y * 0.07);
-        let navyBlue = p.map(noiseVal, 0, 1, 150, 200);
-        noiseGraphics.fill(0, 0, navyBlue);
+        let noiseVal = p.noise(x * 0.05, y * 0.05);
+        let c = p.map(noiseVal, 0, 1, 100, 180);
+        noiseGraphics.fill(c);
         noiseGraphics.rect(x, y, 1, 1);
       }
     }
   };
 
   const drawBackgroundGradient = () => {
-    let backgroundColor1 = p.color(255, 200, 200);
-    let backgroundColor2 = p.color(255, 100, 100);
-    // Center the gradient at 80% of the canvas height
+    // Original beige gradient colors
+    let backgroundColor1 = p.color(235, 225, 200);
+    let backgroundColor2 = p.color(215, 205, 180);
     for (let r = p.height; r > 0; r -= 2) {
       let inter = p.map(r, 0, p.height, 1, 0);
       let c = p.lerpColor(backgroundColor1, backgroundColor2, inter);
       p.fill(c);
-      p.ellipse(p.width / 2, p.height * 0.8, r * 2, r * 2);
+      p.ellipse(p.width / 2, p.height, r * 2, r * 2);
     }
   };
 
-  // Input handling
   p.touchStarted = () => {
     startY = p.mouseY;
     return false;
   };
+
   p.touchMoved = () => {
     let deltaY = startY - p.mouseY;
     energyLevel += deltaY * 0.002;
@@ -152,27 +170,15 @@ const sketch = (p) => {
     startY = p.mouseY;
     return false;
   };
+
   p.mousePressed = () => {
     startY = p.mouseY;
   };
+
   p.mouseDragged = () => {
     let deltaY = startY - p.mouseY;
     energyLevel += deltaY * 0.002;
     energyLevel = p.constrain(energyLevel, 0, 1);
     startY = p.mouseY;
-  };
-
-  p.windowResized = () => {
-    let w, h;
-    if (container) {
-      w = container.clientWidth;
-      h = container.clientHeight;
-    } else {
-      w = window.innerWidth;
-      h = window.innerHeight;
-    }
-    p.resizeCanvas(w, h);
-    noiseGraphics = p.createGraphics(w, h);
-    generateNoiseTexture();
   };
 };
