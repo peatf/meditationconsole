@@ -12,7 +12,7 @@ const sketch = (p) => {
   let noiseGraphics;
 
   p.setup = () => {
-    const container = document.querySelector('.animationScreen');
+    const container = document.querySelector(".animationScreen");
     let w, h;
     if (container) {
       w = container.offsetWidth;
@@ -24,10 +24,10 @@ const sketch = (p) => {
     const canvas = p.createCanvas(w, h);
     // Center the canvas
     const canvasElement = canvas.elt;
-    canvasElement.style.position = 'absolute';
-    canvasElement.style.left = '50%';
-    canvasElement.style.top = '50%';
-    canvasElement.style.transform = 'translate(-50%, -50%)';
+    canvasElement.style.position = "absolute";
+    canvasElement.style.left = "50%";
+    canvasElement.style.top = "50%";
+    canvasElement.style.transform = "translate(-50%, -50%)";
 
     p.pixelDensity(1);
     p.noStroke();
@@ -36,15 +36,20 @@ const sketch = (p) => {
   };
 
   p.draw = () => {
-    // Draw REDDISH Beige Radial Gradient Background
+    // Draw the background gradient and waves scaled down by 30%
+    p.push();
+    const s = 0.7; // scale factor (70%)
+    // Center the scaled drawing in the full canvas:
+    p.translate((p.width - p.width * s) / 2, (p.height - p.height * s) / 2);
+    p.scale(s);
+
     drawBackgroundGradient();
 
-    // Create new waves based on energyLevel
-    if (p.frameCount % (60 - p.map(energyLevel, 0, 1, 10, 50)) === 0) {
+    if (
+      p.frameCount % (60 - p.map(energyLevel, 0, 1, 10, 50)) === 0
+    ) {
       waves.push(new Wave());
     }
-
-    // Update and display waves
     for (let i = waves.length - 1; i >= 0; i--) {
       waves[i].update();
       waves[i].display();
@@ -52,8 +57,9 @@ const sketch = (p) => {
         waves.splice(i, 1);
       }
     }
+    p.pop();
 
-    // Apply noise texture overlay using SCREEN blend mode
+    // Draw the full-size noise overlay (dark blue coverage remains full screen)
     p.blendMode(p.SCREEN);
     p.image(noiseGraphics, 0, 0);
     p.blendMode(p.BLEND);
@@ -99,6 +105,7 @@ const sketch = (p) => {
       let darkBeige = p.color(100, 90, 70, this.lifespan);
 
       p.push();
+      // Original code centers waves at bottom; this now happens within the scaled context.
       p.translate(p.width / 2, p.height);
       for (let i = 0; i < this.segments; i++) {
         let angle = p.map(i, 0, this.segments, 0, p.TWO_PI);
@@ -111,13 +118,13 @@ const sketch = (p) => {
 
         let inter = p.map(this.radius, 0, p.width, 0, 1);
         let c = p.lerpColor(baseColor, darkBeige, inter);
-        let colorOffset = p.noise(this.radius * 0.02, i * 0.05, p.frameCount * 0.01) * 50 - 25;
+        let colorOffset = p
+          .noise(this.radius * 0.02, i * 0.05, p.frameCount * 0.01) * 50 - 25;
         let r = p.constrain(p.red(c) + colorOffset, 0, 255);
         let g = p.constrain(p.green(c) + colorOffset, 0, 255);
         let b = p.constrain(p.blue(c) + colorOffset, 0, 255);
         p.fill(r, g, b, this.lifespan);
 
-        // Add glitch effect based on energyLevel
         if (p.random(1) < this.glitchProbability * energyLevel) {
           x += p.random(-10, 10);
           y += p.random(-10, 10);
@@ -180,7 +187,7 @@ const sketch = (p) => {
   };
 
   p.windowResized = () => {
-    const container = document.querySelector('.animationScreen');
+    const container = document.querySelector(".animationScreen");
     let w, h;
     if (container) {
       w = container.offsetWidth;
@@ -191,10 +198,10 @@ const sketch = (p) => {
     }
     p.resizeCanvas(w, h);
     const canvasElement = p.canvas.elt;
-    canvasElement.style.position = 'absolute';
-    canvasElement.style.left = '50%';
-    canvasElement.style.top = '50%';
-    canvasElement.style.transform = 'translate(-50%, -50%)';
+    canvasElement.style.position = "absolute";
+    canvasElement.style.left = "50%";
+    canvasElement.style.top = "50%";
+    canvasElement.style.transform = "translate(-50%, -50%)";
 
     noiseGraphics = p.createGraphics(p.width, p.height);
     generateNoiseTexture();
