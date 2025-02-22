@@ -17,36 +17,40 @@ const sketch = (p) => {
   let questionAlpha = 255; // Start fully visible
   let questionColor; // To be set from palette
 
-  // COLORS (from the image - ADJUST THESE!)
+  // COLORS (from the image)
   let colorPalette = [];
 
   // FLOW FIELD Variables
   let flowField = [];
-  let flowFieldResolution = 20; // Controls density of the flow field
-  let flowFieldZOffset = 0; // Time dimension for flow field
-  let flowFieldIncrement = 0.01; // Speed of flow field change
-  let particleSpeed = 1; // Speed of particles in the flow field
+  let flowFieldResolution = 20;
+  let flowFieldZOffset = 0;
+  let flowFieldIncrement = 0.01;
+  let particleSpeed = 1;
 
   p.setup = function () {
-    p.createCanvas(p.windowWidth, p.windowHeight);
+    const container = document.querySelector(".animationScreen");
+    let w = container ? container.offsetWidth : 800;
+    let h = container ? container.offsetHeight : 600;
+    p.createCanvas(w, h);
     p.pixelDensity(1);
 
-    layerW = p.floor(p.width / 2);
-    layerH = p.floor(p.height / 2);
+    layerW = p.floor(w / 2);
+    layerH = p.floor(h / 2);
 
     blobLayer = p.createGraphics(layerW, layerH);
     blobLayer.pixelDensity(1);
 
-    textLayer = p.createGraphics(p.width, p.height);
+    textLayer = p.createGraphics(w, h);
+    textLayer.pixelDensity(1);
     textLayer.noSmooth();
 
-    gradientLayer = p.createGraphics(p.width, p.height);
+    gradientLayer = p.createGraphics(w, h);
     gradientLayer.pixelDensity(1);
 
-    noiseLayer = p.createGraphics(p.width, p.height);
+    noiseLayer = p.createGraphics(w, h);
     noiseLayer.pixelDensity(1);
 
-    // EXTRACTED COLORS (from the new image)
+    // EXTRACTED COLORS (adjust as needed)
     colorPalette = [
       p.color(248, 237, 181), // Pale Yellow (Background)
       p.color(237, 156, 120), // Salmon/Orange (for blobs)
@@ -55,63 +59,56 @@ const sketch = (p) => {
       p.color(236, 203, 202), // Pink
     ];
 
-    questionColor = colorPalette[2]; // Text color (dark brown)
+    questionColor = colorPalette[2]; // Dark brown for text
 
-    // Initialize blobs (larger, fewer, using palette colors)
+    // Initialize blobs (fewer, larger)
     for (let i = 0; i < numBlobs; i++) {
-      let baseR = p.random(150, 250); // Larger blobs
-      // Use the Salmon/Orange and Dark Brown for blobs
+      let baseR = p.random(150, 250);
       let blobColor = p.random([colorPalette[1], colorPalette[2]]);
       blobs.push({
         x: layerW / 2 + p.random(-layerW * 0.1, layerW * 0.1),
         y: layerH / 2 + p.random(-layerH * 0.1, layerH * 0.1),
         baseR: baseR,
         r: baseR,
-        dx: p.random(-0.2, 0.2), // Slower movement
+        dx: p.random(-0.2, 0.2),
         dy: p.random(-0.2, 0.2),
         noiseOffset: p.random(1000),
-        morphSpeed: p.random(0.005, 0.015), // Slower morphing
+        morphSpeed: p.random(0.005, 0.015),
         color: blobColor,
       });
     }
 
     p.textAlign(p.CENTER, p.CENTER);
-    p.textSize(p.min(p.width, p.height) * 0.04);
-    p.textFont("Georgia"); // More elegant font
+    p.textSize(p.min(w, h) * 0.04);
+    p.textFont("Georgia");
 
-    // Initialize Flow Field
     initFlowField();
   };
 
   p.draw = function () {
-    // 1) Background (using a color from the palette)
+    // 1) Background
     p.background(colorPalette[0]);
 
-    // 2) ORBS (smooth, morphing)
+    // 2) Draw meta-ball field
     drawIrregularOrbs(blobLayer);
-
-    // Option: Pixelate then blur
     applyPixelation(blobLayer, 3);
     blobLayer.filter(p.BLUR, 3);
-
-    // Apply edge noise for a grunge texture on blob edges
     applyEdgeNoise(blobLayer);
-
     p.image(blobLayer, 0, 0, p.width, p.height);
 
-    // 3) GRADIENT (subtle, using the palette)
+    // 3) Draw subtle gradient overlay
     drawSubtleGradient(gradientLayer);
     p.image(gradientLayer, 0, 0);
 
-    // 4) TEXT (crisp, with a subtle glow)
-    drawArtText();
-
-    // 5) FLOW FIELD DISTORTION (applied to the whole canvas)
+    // 4) Apply flow field distortion
     applyFlowFieldDistortion();
 
-    // 6) Subtle Noise Overlay (for a touch of texture)
+    // 5) Apply subtle noise overlay
     applySubtleNoise(noiseLayer);
     p.image(noiseLayer, 0, 0);
+
+    // 6) Draw text on top so it remains visible
+    drawArtText();
   };
 
   // FLOW FIELD FUNCTIONS
@@ -130,7 +127,7 @@ const sketch = (p) => {
     for (let i = 0; i < flowField.length; i++) {
       let v = flowField[i];
       let angle = p.noise(v.x * 0.005, v.y * 0.005, flowFieldZOffset) * p.TWO_PI * 2;
-      // Use p.createVector with cosine and sine instead of p5.Vector.fromAngle:
+      // Use p.createVector with cosine and sine instead of p5.Vector.fromAngle
       let vec = p.createVector(p.cos(angle), p.sin(angle));
       vec.setMag(particleSpeed);
 
@@ -165,7 +162,7 @@ const sketch = (p) => {
       gfx.fill(b.color);
       gfx.ellipse(b.x, b.y, b.r * 2, b.r * 2);
 
-      // Update blob positions
+      // Update positions
       b.x += b.dx;
       b.y += b.dy;
       if (b.x < -b.r || b.x > gfx.width + b.r) b.dx *= -1;
@@ -186,33 +183,30 @@ const sketch = (p) => {
     }
   }
 
-  // TEXT
+  // TEXT FUNCTION: Draws centered, wrapping text on top
   function drawArtText() {
-  textLayer.clear();
-  textLayer.textWrap(p.WORD);
-  textLayer.textAlign(p.CENTER, p.CENTER);
-  textLayer.textSize(p.min(p.width, p.height) * 0.04);
-  
-  // Set the bounding box for text:
-  // Use the center of the canvas as the anchor, and allow 80% of width.
-  // Using a height of half the canvas ensures enough space for multi-line wrapping.
-  let boxW = p.width * 0.8;
-  let boxH = p.height * 0.5;
-  let centerX = p.width / 2;
-  let centerY = p.height / 2;
-  
-  // Draw shadow/glow first with a slight offset
-  textLayer.fill(p.red(questionColor), p.green(questionColor), p.blue(questionColor), 50);
-  textLayer.text(question, centerX + 2, centerY + 2, boxW, boxH);
-  textLayer.filter(p.BLUR, 2);
-  
-  // Draw the main text on top
-  textLayer.fill(questionColor);
-  textLayer.text(question, centerX, centerY, boxW, boxH);
-  
-  p.image(textLayer, 0, 0);
-}
+    textLayer.clear();
+    textLayer.textWrap(p.WORD);
+    textLayer.textAlign(p.CENTER, p.CENTER);
+    textLayer.textSize(p.min(p.width, p.height) * 0.04);
 
+    // Define a bounding box for text: 80% width and 50% height, centered.
+    let boxW = p.width * 0.8;
+    let boxH = p.height * 0.5;
+    let centerX = p.width / 2;
+    let centerY = p.height / 2;
+
+    // Draw shadow/glow (slightly offset)
+    textLayer.fill(p.red(questionColor), p.green(questionColor), p.blue(questionColor), 50);
+    textLayer.text(question, centerX + 2, centerY + 2, boxW, boxH);
+    textLayer.filter(p.BLUR, 1);
+    
+    // Draw main text on top (fully opaque)
+    textLayer.fill(questionColor);
+    textLayer.text(question, centerX, centerY, boxW, boxH);
+
+    p.image(textLayer, 0, 0);
+  }
 
   // NOISE OVERLAY
   function applySubtleNoise(gfx) {
@@ -231,7 +225,7 @@ const sketch = (p) => {
     gfx.updatePixels();
   }
 
-  // Pixelation function: applies blocky pixelation to the provided graphics buffer.
+  // Pixelation function
   function applyPixelation(gfx, blockSize) {
     gfx.loadPixels();
     let d = gfx.pixelDensity();
@@ -245,6 +239,7 @@ const sketch = (p) => {
         let g = gfx.pixels[idx + 1];
         let b = gfx.pixels[idx + 2];
         let a = gfx.pixels[idx + 3];
+
         for (let py = 0; py < blockSize; py++) {
           for (let px = 0; px < blockSize; px++) {
             let x2 = x + px;
@@ -263,7 +258,7 @@ const sketch = (p) => {
     gfx.updatePixels();
   }
 
-  // Edge Noise function: adds a noise effect on edges based on pixel alpha differences.
+  // Edge Noise function
   function applyEdgeNoise(gfx) {
     gfx.loadPixels();
     let d = gfx.pixelDensity();
