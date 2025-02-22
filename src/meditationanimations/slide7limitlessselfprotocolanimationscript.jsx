@@ -17,48 +17,36 @@ const sketch = (p) => {
   let questionAlpha = 255; // Start fully visible
   let questionColor; // To be set from palette
 
-  // Colors (extracted from an image)
+  // COLORS (from the image - ADJUST THESE!)
   let colorPalette = [];
 
-  // Flow Field Variables
+  // FLOW FIELD Variables
   let flowField = [];
-  let flowFieldResolution = 20;
-  let flowFieldZOffset = 0;
-  let flowFieldIncrement = 0.01;
-  let particleSpeed = 1;
+  let flowFieldResolution = 20; // Controls density of the flow field
+  let flowFieldZOffset = 0; // Time dimension for flow field
+  let flowFieldIncrement = 0.01; // Speed of flow field change
+  let particleSpeed = 1; // Speed of particles in the flow field
 
   p.setup = function () {
-    const container = document.querySelector(".animationScreen");
-    let w = container ? container.offsetWidth : 800;
-    let h = container ? container.offsetHeight : 600;
-    const canvas = p.createCanvas(w, h);
-    // Center the canvas
-    const canvasElement = canvas.elt;
-    canvasElement.style.position = "absolute";
-    canvasElement.style.left = "50%";
-    canvasElement.style.top = "50%";
-    canvasElement.style.transform = "translate(-50%, -50%)";
-
+    p.createCanvas(p.windowWidth, p.windowHeight);
     p.pixelDensity(1);
 
-    // Set up offscreen buffers
-    layerW = p.floor(w / 2);
-    layerH = p.floor(h / 2);
+    layerW = p.floor(p.width / 2);
+    layerH = p.floor(p.height / 2);
 
     blobLayer = p.createGraphics(layerW, layerH);
     blobLayer.pixelDensity(1);
 
-    textLayer = p.createGraphics(w, h);
-    textLayer.pixelDensity(1);
+    textLayer = p.createGraphics(p.width, p.height);
     textLayer.noSmooth();
 
-    gradientLayer = p.createGraphics(w, h);
+    gradientLayer = p.createGraphics(p.width, p.height);
     gradientLayer.pixelDensity(1);
 
-    noiseLayer = p.createGraphics(w, h);
+    noiseLayer = p.createGraphics(p.width, p.height);
     noiseLayer.pixelDensity(1);
 
-    // Define a soft pastel palette
+    // EXTRACTED COLORS (from the new image)
     colorPalette = [
       p.color(248, 237, 181), // Pale Yellow (Background)
       p.color(237, 156, 120), // Salmon/Orange (for blobs)
@@ -66,54 +54,62 @@ const sketch = (p) => {
       p.color(213, 205, 163), // Light Yellow
       p.color(236, 203, 202), // Pink
     ];
-    questionColor = colorPalette[2];
+
+    questionColor = colorPalette[2]; // Text color (dark brown)
 
     // Initialize blobs (larger, fewer, using palette colors)
     for (let i = 0; i < numBlobs; i++) {
-      let baseR = p.random(150, 250);
+      let baseR = p.random(150, 250); // Larger blobs
+      // Use the Salmon/Orange and Dark Brown for blobs
       let blobColor = p.random([colorPalette[1], colorPalette[2]]);
       blobs.push({
         x: layerW / 2 + p.random(-layerW * 0.1, layerW * 0.1),
         y: layerH / 2 + p.random(-layerH * 0.1, layerH * 0.1),
         baseR: baseR,
         r: baseR,
-        dx: p.random(-0.2, 0.2),
+        dx: p.random(-0.2, 0.2), // Slower movement
         dy: p.random(-0.2, 0.2),
         noiseOffset: p.random(1000),
-        morphSpeed: p.random(0.005, 0.015),
+        morphSpeed: p.random(0.005, 0.015), // Slower morphing
         color: blobColor,
       });
     }
 
     p.textAlign(p.CENTER, p.CENTER);
-    p.textSize(p.min(w, h) * 0.04);
-    p.textFont("Georgia");
+    p.textSize(p.min(p.width, p.height) * 0.04);
+    p.textFont("Georgia"); // More elegant font
 
+    // Initialize Flow Field
     initFlowField();
   };
 
   p.draw = function () {
-    // 1) Background using a palette color
+    // 1) Background (using a color from the palette)
     p.background(colorPalette[0]);
 
-    // 2) Draw and process the meta-ball field
+    // 2) ORBS (smooth, morphing)
     drawIrregularOrbs(blobLayer);
+
+    // Option: Pixelate then blur
     applyPixelation(blobLayer, 3);
     blobLayer.filter(p.BLUR, 3);
+
+    // Apply edge noise for a grunge texture on blob edges
     applyEdgeNoise(blobLayer);
+
     p.image(blobLayer, 0, 0, p.width, p.height);
 
-    // 3) Draw a subtle gradient overlay
+    // 3) GRADIENT (subtle, using the palette)
     drawSubtleGradient(gradientLayer);
     p.image(gradientLayer, 0, 0);
 
-    // 4) Draw the artistic text with glow/dithering
+    // 4) TEXT (crisp, with a subtle glow)
     drawArtText();
 
-    // 5) Apply flow field distortion to the entire canvas
+    // 5) FLOW FIELD DISTORTION (applied to the whole canvas)
     applyFlowFieldDistortion();
 
-    // 6) Apply a subtle noise overlay for texture
+    // 6) Subtle Noise Overlay (for a touch of texture)
     applySubtleNoise(noiseLayer);
     p.image(noiseLayer, 0, 0);
   };
@@ -134,7 +130,7 @@ const sketch = (p) => {
     for (let i = 0; i < flowField.length; i++) {
       let v = flowField[i];
       let angle = p.noise(v.x * 0.005, v.y * 0.005, flowFieldZOffset) * p.TWO_PI * 2;
-      // Instead of p5.Vector.fromAngle, we use p.createVector with cosine and sine:
+      // Use p.createVector with cosine and sine instead of p5.Vector.fromAngle:
       let vec = p.createVector(p.cos(angle), p.sin(angle));
       vec.setMag(particleSpeed);
 
@@ -225,12 +221,15 @@ const sketch = (p) => {
   function applySubtleNoise(gfx) {
     gfx.clear();
     gfx.loadPixels();
-    for (let i = 0; i < gfx.pixels.length; i += 4) {
-      let noiseVal = p.random(50);
-      gfx.pixels[i] = noiseVal;
-      gfx.pixels[i + 1] = noiseVal;
-      gfx.pixels[i + 2] = noiseVal;
-      gfx.pixels[i + 3] = 50;
+    for (let y = 0; y < gfx.height; y++) {
+      for (let x = 0; x < gfx.width; x++) {
+        let idx = 4 * (x + y * gfx.width);
+        let noiseVal = p.random(50);
+        gfx.pixels[idx + 0] = noiseVal;
+        gfx.pixels[idx + 1] = noiseVal;
+        gfx.pixels[idx + 2] = noiseVal;
+        gfx.pixels[idx + 3] = 50;
+      }
     }
     gfx.updatePixels();
   }
@@ -249,7 +248,6 @@ const sketch = (p) => {
         let g = gfx.pixels[idx + 1];
         let b = gfx.pixels[idx + 2];
         let a = gfx.pixels[idx + 3];
-
         for (let py = 0; py < blockSize; py++) {
           for (let px = 0; px < blockSize; px++) {
             let x2 = x + px;
@@ -285,7 +283,7 @@ const sketch = (p) => {
           for (let ny = -1; ny <= 1; ny++) {
             for (let nx = -1; nx <= 1; nx++) {
               let nIdx = 4 * ((x + nx) + (y + ny) * totalW);
-              alphaDiff += Math.abs(a - originalPixels[nIdx + 3]);
+              alphaDiff += p.abs(a - originalPixels[nIdx + 3]);
             }
           }
           if (alphaDiff > 200) {
@@ -301,7 +299,7 @@ const sketch = (p) => {
   }
 
   p.windowResized = function () {
-    p.resizeCanvas(windowWidth, windowHeight);
+    p.resizeCanvas(p.windowWidth, p.windowHeight);
     layerW = p.floor(p.width / 2);
     layerH = p.floor(p.height / 2);
 
