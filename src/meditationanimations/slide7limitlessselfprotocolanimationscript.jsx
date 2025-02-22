@@ -134,8 +134,8 @@ const sketch = (p) => {
     for (let i = 0; i < flowField.length; i++) {
       let v = flowField[i];
       let angle = p.noise(v.x * 0.005, v.y * 0.005, flowFieldZOffset) * p.TWO_PI * 2;
-      // Use p.Vector instead of p5.Vector for instance mode:
-      let vec = p.Vector.fromAngle(angle);
+      // Instead of p.Vector.fromAngle(angle), use createVector with cosine and sine:
+      let vec = p.createVector(p.cos(angle), p.sin(angle));
       vec.setMag(particleSpeed);
 
       let sourceX = p.floor(v.x + vec.x);
