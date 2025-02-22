@@ -6,213 +6,387 @@ export default function Slide4Animation() {
 }
 
 const sketch = (p) => {
-  // Move all variables inside sketch
-  let questions = [
+  /*
+    SHADER DEFINITIONS
+  */
+  const vertShader = `
+    precision highp float;
+    attribute vec3 aPosition;
+    attribute vec2 aTexCoord;
+    varying vec2 vTexCoord;
+
+    void main() {
+      vTexCoord = aTexCoord;
+      vec4 position = vec4(aPosition, 1.0);
+      position.xy = position.xy * 2.0 - 1.0;
+      gl_Position = position;
+    }
+  `;
+
+  const fragShader = `
+    precision highp float;
+    varying vec2 vTexCoord;
+    uniform float u_time;
+    uniform vec2 u_resolution;
+
+    float hash(vec2 p) {
+      return fract(sin(dot(p, vec2(12.9898,78.233))) * 43758.5453);
+    }
+
+    void main() {
+      vec2 uv = vTexCoord * 2.0 - 1.0;
+      float time = u_time * 0.3;
+      
+      float n = sin(uv.x * 3.0 + time) * 0.3 + 
+                sin(uv.y * 2.5 + time) * 0.4 + 
+                sin((uv.x + uv.y) * 4.0 + time) * 0.3;
+      
+      // Base greenish gradient replaced with a softer background
+      // but still mixing
+      vec3 base = mix(vec3(0.16, 0.36, 0.20), vec3(0.96, 0.84, 0.65), n*0.5);
+      
+      // Pink accent with increased saturation
+      vec3 pinkAccent = vec3(0.95, 0.45, 0.60);
+      vec3 greenAccent = vec3(0.24, 0.42, 0.30);
+      vec3 accent = mix(pinkAccent, greenAccent, n);
+      
+      // Additional pink glow
+      float pinkGlow = sin(uv.x * 2.0 + time * 0.5) * 0.5 + 0.5;
+      vec3 finalColor = mix(base, accent, smoothstep(0.3, 0.7, n)) + pinkAccent * pinkGlow * 0.2;
+      
+      // Subtle paper-like noise
+      float paper = hash(uv * 100.0) * 0.1;
+
+      // Add a simple CRT-like scan line effect
+      float scan = sin(gl_FragCoord.y * 2.0) * 0.05;
+      finalColor -= scan;
+
+      gl_FragColor = vec4(finalColor + paper, 0.4);
+    }
+  `;
+
+  /*
+    GLOBALS & FISH CLASS
+  */
+  let shaderLayer;
+  let shaderProgram;
+  let textLayer;
+
+  const questions = [
     "What is the limitless self like?",
     "How would you describe them?",
     "What does it feel like to connect with them?"
   ];
+
   let currentQuestionIndex = 0;
   let questionAlpha = 0;
-  let questionFadingIn = true;
-  let questionDisplayed = true;
+  const fadeDuration = 180;
+  let fadeCounter = 0;
+  let fadeState = 'waiting';
+  let lastInteractionTime = 0;
+  const minTimeBetweenInteractions = 2000;
 
-  // Meta-balls variables
-  let numBlobs = 5;
-  let blobs = [];
-  let blobLayer;
-  let layerW, layerH;
-  let textLayer;
+  let fish = [];
 
-  // Glitch variables
-  let glitchActive = false;
-  let glitchTimer = 0;
-  let glitchDuration = 25;
+  // Reds for fish
+  const fishColors = [
+    '#FF7272', // light-ish red
+    '#FF4747', // bright red
+    '#FF1C1C', // bold red
+    '#D41414', // deeper red
+    '#FF6666'  // soft red
+  ];
 
+  class EtherealFish {
+    constructor(x, y, fishColor) {
+      this.color = p.color(fishColor);
+      this.position = p.createVector(x + p.random(-100, 100), y + p.random(-100, 100));
+      this.velocity = p5.Vector.random2D().mult(p.random(1, 2));
+      this.acceleration = p.createVector();
+      this.maxSpeed = 2;
+      this.maxForce = 0.05;
+      
+      this.baseSize = p.random(15, 25);
+      this.bodyLength = this.baseSize * 3;
+      this.body = new Array(p.int(this.bodyLength)).fill().map(() => this.position.copy());
+      
+      this.timeOffset = p.random(1000);
+      this.pulseRate = p.random(0.01, 0.02);
+      this.waveAmplitude = p.random(0.8, 1.2);
+    }
+
+    applyForce(force) {
+      this.acceleration.add(force);
+    }
+
+    update() {
+      this.velocity.add(this.acceleration);
+      this.velocity.limit(this.maxSpeed);
+      this.position.add(this.velocity);
+      this.acceleration.mult(0);
+      
+      this.body.unshift(this.position.copy());
+      this.body.pop();
+    }
+
+    show() {
+      let angle = this.velocity.heading();
+      p.noStroke();
+      
+      for (let layer = 0; layer < 3; layer++) {
+        this.body.forEach((pos, index) => {
+          let progress = index / this.bodyLength;
+          let time = p.frameCount * this.pulseRate + this.timeOffset;
+          
+          let noiseVal = p.noise(pos.x * 0.05, pos.y * 0.05, time * 0.5);
+          
+          let blobShape = (p.cos(progress * p.PI) + 1) * this.baseSize;
+          let pulse = p.sin(time) * 0.1 + 1;
+          let wave = p.sin(progress * 3 + time) * this.waveAmplitude;
+          let size = p.max(0, blobShape * pulse + wave);
+          
+          size *= (1 + (noiseVal - 0.5) * 0.2);
+          
+          let baseAlpha = p.map(index, 0, this.bodyLength, 40, 0);
+          let layerAlpha = baseAlpha * (layer + 1) / 5;
+          
+          let fishColor = p.color(
+            p.red(this.color),
+            p.green(this.color),
+            p.blue(this.color),
+            layerAlpha
+          );
+          p.fill(fishColor);
+          
+          p.push();
+          p.translate(pos.x, pos.y);
+          p.rotate(angle);
+          
+          let layerSize = size * (1 - layer * 0.15);
+          p.drawingContext.filter = 'blur(8px)';
+          
+          if (layer === 1) {
+            let textureColor = p.color(
+              p.red(this.color),
+              p.green(this.color),
+              p.blue(this.color),
+              layerAlpha * 0.7
+            );
+            p.fill(textureColor);
+            for (let i = 0; i < 3; i++) {
+              let offset = p.noise(time + i, progress * 2) * 5;
+              p.ellipse(offset, offset, layerSize * 1.3, layerSize * 0.9);
+            }
+          }
+          
+          p.ellipse(0, 0, layerSize * 1.6, layerSize);
+          
+          if (layer === 0) {
+            fishColor.setAlpha(layerAlpha * 0.3);
+            p.fill(fishColor);
+            p.drawingContext.filter = 'blur(12px)';
+            p.ellipse(0, 0, layerSize * 2, layerSize * 1.2);
+          }
+          
+          p.drawingContext.filter = 'none';
+          p.pop();
+        });
+      }
+    }
+
+    showShadow() {
+      p.noStroke();
+      for (let layer = 0; layer < 2; layer++) {
+        this.body.forEach((pos, index) => {
+          let progress = index / this.bodyLength;
+          let time = p.frameCount * this.pulseRate + this.timeOffset;
+          
+          let blobShape = (p.cos(progress * p.PI) + 1) * this.baseSize;
+          let pulse = p.sin(time) * 0.1 + 1;
+          let wave = p.sin(progress * 3 + time) * this.waveAmplitude;
+          let size = p.max(0, blobShape * pulse + wave);
+          
+          let shadowAlpha = p.map(index, 0, this.bodyLength, 3, 0);
+          p.fill(0, 0, 0, shadowAlpha);
+          
+          p.push();
+          p.translate(pos.x + 30, pos.y + 30);
+          p.rotate(this.velocity.heading());
+          
+          p.drawingContext.filter = 'blur(15px)';
+          let layerSize = size * (1 - layer * 0.15);
+          p.ellipse(0, 0, layerSize * 1.6, layerSize);
+          
+          if (layer === 0) {
+            p.drawingContext.filter = 'blur(20px)';
+            p.ellipse(0, 0, layerSize * 2, layerSize * 1.2);
+          }
+          
+          p.drawingContext.filter = 'none';
+          p.pop();
+        });
+      }
+    }
+
+    edges() {
+      if (this.position.x > p.width + 50) this.position.x = -50;
+      if (this.position.x < -50) this.position.x = p.width + 50;
+      if (this.position.y > p.height + 50) this.position.y = -50;
+      if (this.position.y < -50) this.position.y = p.height + 50;
+    }
+
+    flock(fishArr) {
+      let alignment = p.createVector();
+      let cohesion = p.createVector();
+      let separation = p.createVector();
+      let total = 0;
+
+      for (let other of fishArr) {
+        let d = p.dist(this.position.x, this.position.y, other.position.x, other.position.y);
+        if (other !== this && d < 100) {
+          alignment.add(other.velocity);
+          cohesion.add(other.position);
+          let diff = p5.Vector.sub(this.position, other.position).div(d);
+          separation.add(diff);
+          total++;
+        }
+      }
+
+      if (total > 0) {
+        alignment.div(total).setMag(this.maxSpeed).sub(this.velocity).limit(this.maxForce);
+        cohesion.div(total).sub(this.position).setMag(this.maxSpeed).sub(this.velocity).limit(this.maxForce);
+        separation.div(total).setMag(this.maxSpeed).sub(this.velocity).limit(this.maxForce);
+      }
+
+      this.applyForce(alignment.mult(0.8));
+      this.applyForce(cohesion.mult(0.5));
+      this.applyForce(separation.mult(1.2));
+    }
+  }
+
+  /*
+    P5 SETUP
+  */
   p.setup = () => {
-    // Container-based canvas setup
+    // Basic container-based canvas approach
     const defaultWidth = 800;
     const defaultHeight = 600;
-    p.createCanvas(defaultWidth, defaultHeight);
-    p.noSmooth();
+    p.createCanvas(defaultWidth, defaultHeight, p.P2D);
+    p.pixelDensity(1);
 
+    // If you want to allow clicks to pass through to container's buttons:
+    // p.canvas.style['pointer-events'] = 'none';
+
+    // Resize canvas to match .animationScreen if it exists
     const container = document.querySelector('.animationScreen');
     if (container) {
       p.resizeCanvas(container.offsetWidth, container.offsetHeight);
     }
 
-    // Initialize offscreen buffers
-    layerW = p.floor(p.width / 2);
-    layerH = p.floor(p.height / 2);
-    blobLayer = p.createGraphics(layerW, layerH);
+    // Initialize shader layer
+    shaderLayer = p.createGraphics(p.width, p.height, p.WEBGL);
+    shaderLayer.pixelDensity(1);
+    shaderLayer.noStroke();
+    shaderProgram = shaderLayer.createShader(vertShader, fragShader);
+    shaderLayer.shader(shaderProgram);
+
+    // Initialize text layer
     textLayer = p.createGraphics(p.width, p.height);
-    textLayer.noSmooth();
-
-    // Initialize blobs
-    for (let i = 0; i < numBlobs; i++) {
-      blobs.push({
-        x: p.random(layerW),
-        y: p.random(layerH),
-        r: p.random(40, 80),
-        dx: p.random(-1, 1),
-        dy: p.random(-1, 1)
-      });
-    }
-
-    // Text setup
-    p.textAlign(p.CENTER, p.CENTER);
-    p.textSize(p.min(p.width, p.height) * 0.06);
-  };
-
-  p.draw = () => {
-    p.background(245, 240, 235);
-
-    // 1) Meta-balls layer
-    drawMetaBalls(blobLayer);
-    blobLayer.filter(p.BLUR, 3);
-    applyBayerDither(blobLayer);
-    p.image(blobLayer, 0, 0, p.width, p.height);
-
-    // 2) Text layer
-    updateQuestionFade();
-    drawArtText();
-
-    // 3) Glitch effect
-    if (glitchActive) {
-      glitchTimer++;
-      applyGlitch();
-      if (glitchTimer > glitchDuration) {
-        glitchActive = false;
-        glitchTimer = 0;
-      }
-    }
-
-    // 4) Grain effect
-    applyGrain(5);
-  };
-
-  const drawMetaBalls = (gfx) => {
-    gfx.loadPixels();
-    for (let b of blobs) {
-      b.x += b.dx;
-      b.y += b.dy;
-      if (b.x < 0 || b.x > layerW) b.dx *= -1;
-      if (b.y < 0 || b.y > layerH) b.dy *= -1;
-    }
-
-    let pastel1 = p.color(255, 230, 240);
-    let pastel2 = p.color(250, 240, 200);
-    let pastel3 = p.color(220, 230, 255);
-    let thresholds = [0.8, 2.0, 3.5];
-
-    let d = gfx.pixelDensity();
-    for (let y = 0; y < gfx.height; y++) {
-      for (let x = 0; x < gfx.width; x++) {
-        let fieldValue = 0;
-        for (let b of blobs) {
-          let dx = x - b.x;
-          let dy = y - b.y;
-          let distSq = dx * dx + dy * dy;
-          if (distSq < 0.0001) distSq = 0.0001;
-          fieldValue += (b.r * b.r) / distSq;
-        }
-
-        let c = p.color(255, 255, 255, 0);
-        if (fieldValue > thresholds[0]) c = pastel1;
-        if (fieldValue > thresholds[1]) c = pastel2;
-        if (fieldValue > thresholds[2]) c = pastel3;
-
-        let index = 4 * (x + y * gfx.width) * d * d;
-        gfx.pixels[index + 0] = p.red(c);
-        gfx.pixels[index + 1] = p.green(c);
-        gfx.pixels[index + 2] = p.blue(c);
-        gfx.pixels[index + 3] = p.alpha(c) || 255;
-      }
-    }
-    gfx.updatePixels();
-  };
-
-  const drawArtText = () => {
-    textLayer.clear();
-    textLayer.fill(40, 30, 30, questionAlpha);
+    textLayer.pixelDensity(1);
     textLayer.textAlign(p.CENTER, p.CENTER);
-    textLayer.textSize(p.min(p.width, p.height) * 0.06);
-    textLayer.text(questions[currentQuestionIndex], p.width / 2, p.height * 0.5);
-    textLayer.filter(p.BLUR, 2);
-    applyBayerDither(textLayer);
+    textLayer.textSize(p.min(p.width, p.height) * 0.055);
 
+    // Create fish
+    fish = [];
+    const centerX = p.width / 2;
+    const centerY = p.height / 2;
+    for (let i = 0; i < 15; i++) {
+      const fishColor = p.color(fishColors[p.int(p.random(fishColors.length))]);
+      fishColor.setAlpha(150);
+      fish.push(new EtherealFish(centerX, centerY, fishColor));
+    }
+  };
+
+  /*
+    P5 DRAW
+  */
+  p.draw = () => {
+    // 1) Draw the shader background
+    shaderLayer.clear();
+    shaderProgram.setUniform('u_time', p.millis() * 0.001);
+    shaderProgram.setUniform('u_resolution', [p.width, p.height]);
+    shaderLayer.rect(0, 0, p.width, p.height);
+    p.image(shaderLayer, 0, 0, p.width, p.height);
+
+    // 2) Draw fish shadows (use MULTIPLY blend for shadow effect)
+    p.push();
     p.blendMode(p.MULTIPLY);
-    p.image(textLayer, 0, 0);
-    p.blendMode(p.BLEND);
+    fish.forEach(f => f.showShadow());
+    p.pop();
+
+    // 3) Update & draw fish
+    fish.forEach(f => {
+      f.edges();
+      f.flock(fish);
+      f.update();
+      f.show();
+    });
+
+    // 4) Handle text fade and display
+    handleTextAnimation();
+    textLayer.clear();
+    textLayer.fill(0, 16);
+    textLayer.rect(0, 0, p.width, p.height);
+    textLayer.fill(255, questionAlpha);
+    textLayer.text(questions[currentQuestionIndex], p.width / 2, p.height / 2);
+    p.image(textLayer, 0, 0, p.width, p.height);
   };
 
-  const updateQuestionFade = () => {
-    if (questionFadingIn) {
-      questionAlpha = p.min(questionAlpha + 4, 255);
-      if (questionAlpha === 255) questionFadingIn = false;
-    } else if (!questionDisplayed) {
-      questionAlpha = p.max(questionAlpha - 4, 0);
-      if (questionAlpha === 0) {
-        currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
-        questionDisplayed = true;
-        questionFadingIn = true;
-      }
-    }
-  };
-
-  const applyBayerDither = (gfx) => {
-    gfx.loadPixels();
-    const bayer = [[1, 9, 3, 11], [13, 5, 15, 7], [4, 12, 2, 10], [16, 8, 14, 6]];
-    
-    for (let y = 0; y < gfx.height; y++) {
-      for (let x = 0; x < gfx.width; x++) {
-        let index = 4 * (x + y * gfx.width) * gfx.pixelDensity() ** 2;
-        if (gfx.pixels[index + 3] < 1) continue;
-
-        let brightness = (gfx.pixels[index] + gfx.pixels[index + 1] + gfx.pixels[index + 2]) / 3;
-        let threshold = (bayer[x % 4][y % 4] / 17) * 255;
-
-        if (brightness < threshold) {
-          gfx.pixels[index] = p.lerp(gfx.pixels[index], 245, 0.6);
-          gfx.pixels[index + 1] = p.lerp(gfx.pixels[index + 1], 240, 0.6);
-          gfx.pixels[index + 2] = p.lerp(gfx.pixels[index + 2], 235, 0.6);
+  /*
+    HELPER: QUESTION FADE STATE MACHINE
+  */
+  function handleTextAnimation() {
+    switch (fadeState) {
+      case 'waiting':
+        break;
+      case 'fadeIn':
+        questionAlpha = p.map(fadeCounter, 0, fadeDuration, 0, 255);
+        fadeCounter++;
+        if (fadeCounter >= fadeDuration) {
+          fadeCounter = 0;
+          fadeState = 'visible';
         }
-      }
+        break;
+      case 'visible':
+        break;
+      case 'fadeOut':
+        questionAlpha = p.map(fadeCounter, 0, fadeDuration, 255, 0);
+        fadeCounter++;
+        if (fadeCounter >= fadeDuration) {
+          fadeCounter = 0;
+          currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
+          fadeState = 'fadeIn';
+        }
+        break;
     }
-    gfx.updatePixels();
-  };
+  }
 
-  const applyGlitch = () => {
-    let snapshot = p.get();
-    let offset = 6;
-
-    p.tint(255, 0, 0);
-    p.image(snapshot, p.random(-offset, offset), p.random(-offset, offset));
-    p.tint(0, 255, 0, 180);
-    p.image(snapshot, p.random(-offset, offset), p.random(-offset, offset));
-    p.tint(0, 0, 255, 180);
-    p.image(snapshot, p.random(-offset, offset), p.random(-offset, offset));
-    p.tint(255);
-  };
-
-  const applyGrain = (strength) => {
-    p.loadPixels();
-    for (let i = 0; i < p.pixels.length; i += 4) {
-      let amt = p.random(-strength, strength);
-      p.pixels[i] += amt;
-      p.pixels[i + 1] += amt;
-      p.pixels[i + 2] += amt;
-    }
-    p.updatePixels();
-  };
-
-  // Event handlers
+  /*
+    INTERACTION EVENTS
+  */
   p.mousePressed = () => {
-    if (questionDisplayed) {
-      questionDisplayed = false;
-      questionFadingIn = false;
-      glitchActive = true;
-      glitchTimer = 0;
+    // Prevent immediate re-click interactions
+    const currentTime = p.millis();
+    if (currentTime - lastInteractionTime < minTimeBetweenInteractions) return;
+    lastInteractionTime = currentTime;
+
+    switch (fadeState) {
+      case 'waiting':
+        fadeState = 'fadeIn';
+        break;
+      case 'visible':
+        fadeState = 'fadeOut';
+        break;
     }
   };
 
@@ -221,16 +395,20 @@ const sketch = (p) => {
     return false;
   };
 
+  /*
+    HANDLE RESIZE
+  */
   p.windowResized = () => {
     const container = document.querySelector('.animationScreen');
     if (container) {
       p.resizeCanvas(container.offsetWidth, container.offsetHeight);
-      layerW = p.floor(p.width / 2);
-      layerH = p.floor(p.height / 2);
-      blobLayer = p.createGraphics(layerW, layerH);
-      textLayer = p.createGraphics(p.width, p.height);
-      textLayer.noSmooth();
-      p.textSize(p.min(p.width, p.height) * 0.06);
+    }
+    if (shaderLayer) {
+      shaderLayer.resizeCanvas(p.width, p.height);
+    }
+    if (textLayer) {
+      textLayer.resizeCanvas(p.width, p.height);
+      textLayer.textSize(p.min(p.width, p.height) * 0.055);
     }
   };
 };
