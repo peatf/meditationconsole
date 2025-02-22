@@ -449,4 +449,16 @@
       inset -2px -2px 5px rgba(255, 255, 250, 0.8);
     border-color: #D6D7D1;
   }
+  /* Add to your CSS */
+[data-slide="2"] .animationScreen {
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+  overflow: hidden !important;
+}
+
+[data-slide="2"] canvas {
+  touch-action: none !important;
+  z-index: 2 !important;
+  position: relative;
+}
 }
