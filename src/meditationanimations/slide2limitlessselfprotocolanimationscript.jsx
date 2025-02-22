@@ -2,21 +2,7 @@
 import { ReactP5Wrapper } from "@p5-wrapper/react";
 
 export default function Slide2Animation() {
-  return (
-    <div 
-      className="animationScreen" 
-      data-slide="2" // Add this attribute
-      style={{ 
-        position: "relative", 
-        width: "100%", 
-        height: "100%",
-        // Force hardware acceleration
-        transform: 'translateZ(0)'
-      }}
-    >
-      <ReactP5Wrapper sketch={sketch} />
-    </div>
-  );
+  return <ReactP5Wrapper sketch={sketch} />;
 }
 
 const sketch = (p) => {
@@ -25,16 +11,15 @@ const sketch = (p) => {
   let startY = 0;
   let noiseGraphics;
   let touchBlocked = false;
-  let canvasElement; // store the canvas element
 
   p.setup = () => {
     const container = document.querySelector(".animationScreen");
     let w = container ? container.offsetWidth : window.innerWidth;
     let h = container ? container.offsetHeight : window.innerHeight;
     const canvas = p.createCanvas(w, h);
-    canvasElement = canvas.elt;
 
     // Center the canvas
+    const canvasElement = canvas.elt;
     canvasElement.style.position = "absolute";
     canvasElement.style.left = "50%";
     canvasElement.style.top = "50%";
@@ -49,16 +34,20 @@ const sketch = (p) => {
   };
 
   p.draw = () => {
+    // Draw scaled artwork (70% of full size)
     p.push();
-    const s = 0.7; // scale factor (70%)
+    const s = 0.7;
+    // Center the scaled drawing within the full canvas
     p.translate((p.width - p.width * s) / 2, (p.height - p.height * s) / 2);
     p.scale(s);
 
     drawBackgroundGradient();
 
+    // Add new wave periodically based on energyLevel
     if (p.frameCount % (60 - p.map(energyLevel, 0, 1, 10, 50)) === 0) {
       waves.push(new Wave());
     }
+    // Update & display waves
     for (let i = waves.length - 1; i >= 0; i--) {
       waves[i].update();
       waves[i].display();
@@ -66,10 +55,12 @@ const sketch = (p) => {
     }
     p.pop();
 
+    // Fullscreen dark-blue noise overlay
     p.blendMode(p.SCREEN);
     p.image(noiseGraphics, 0, 0);
     p.blendMode(p.BLEND);
 
+    // Grain effect
     p.loadPixels();
     for (let i = 0; i < p.pixels.length; i += 4) {
       let grain = p.random(-10, 10);
@@ -153,37 +144,26 @@ const sketch = (p) => {
     }
   };
 
+  // --- Touch Handlers for Slide2 ---
   p.touchStarted = (event) => {
-  if (event.target === canvasElement) {
+    // Always block scrolling on the canvas for Slide2
     startY = p.mouseY;
     touchBlocked = true;
-    event.stopImmediatePropagation();
     event.preventDefault();
-    return false;
-  }
-};
+  };
 
- p.touchMoved = (event) => {
-  if (touchBlocked) {
-    const currentY = p.mouseY;
-    const deltaY = startY - currentY;
-    energyLevel = p.constrain(energyLevel + deltaY * 0.002, 0, 1);
-    startY = currentY;
-    
-    // Force hardware rendering update
-    canvasElement.style.transform = `translate(-50%, -50%) perspective(1000px)`;
-    
-    event.stopPropagation();
-    event.preventDefault();
-    return false;
-  }
-};
-
-  p.touchEnded = (event) => {
-    // Only reset touchBlocked if the touch ended on the canvas
-    if (event.target === canvasElement) {
-      touchBlocked = false;
+  p.touchMoved = (event) => {
+    if (touchBlocked) {
+      let deltaY = startY - p.mouseY;
+      energyLevel += deltaY * 0.002;
+      energyLevel = p.constrain(energyLevel, 0, 1);
+      startY = p.mouseY;
+      event.preventDefault();
     }
+  };
+
+  p.touchEnded = () => {
+    touchBlocked = false;
   };
 
   p.windowResized = () => {
