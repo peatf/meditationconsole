@@ -10,7 +10,7 @@ const sketch = (p) => {
   let waves = [];
   let startY = 0;
   let noiseGraphics;
-  let touchBlocked = false; // NEW: Flag to track if scrolling should be blocked
+  let touchBlocked = false; 
 
   p.setup = () => {
     const container = document.querySelector(".animationScreen");
@@ -152,9 +152,13 @@ const sketch = (p) => {
   };
 
   p.touchStarted = (event) => {
-    startY = p.mouseY;
-    touchBlocked = true;
-    event.preventDefault(); // FULLY STOP SCROLLING
+    // Only block scrolling if touch happens inside the animation screen
+    const container = document.querySelector(".animationScreen");
+    if (container && container.contains(event.target)) {
+      startY = p.mouseY;
+      touchBlocked = true;
+      event.preventDefault(); // Block scrolling
+    }
   };
 
   p.touchMoved = (event) => {
@@ -163,11 +167,11 @@ const sketch = (p) => {
       energyLevel += deltaY * 0.002;
       energyLevel = p.constrain(energyLevel, 0, 1);
       startY = p.mouseY;
-      event.preventDefault(); // Keep blocking scrolling
+      event.preventDefault(); // Keep blocking scrolling inside animation screen
     }
   };
 
-  p.touchEnded = () => {
+  p.touchEnded = (event) => {
     touchBlocked = false; // Allow scrolling again
   };
 
