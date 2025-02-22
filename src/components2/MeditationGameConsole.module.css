@@ -222,7 +222,9 @@
   align-items: center;
   z-index: 1;
   position: relative;  /* If not already present */
-  isolation: isolate; 
+  isolation: isolate;
+   touch-action: pan-y; 
+  overscroll-behavior: contain;
 }
 
 /* Add inset shadow and screen effect */
@@ -277,6 +279,7 @@
   position: relative;
   z-index: 1 !important; /* Force behind buttons */
   pointer-events: none;
+  touch-action: none;
 }
 
 /* ----- Text Styles ----- */
