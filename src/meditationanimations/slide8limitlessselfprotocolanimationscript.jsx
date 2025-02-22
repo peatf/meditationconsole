@@ -146,6 +146,7 @@ const sketch = (p) => {
     canvasElement.style.zIndex = "0";
     // Ensure touch events register correctly on mobile:
     canvasElement.style.touchAction = "none";
+    canvasElement.style.pointerEvents = "none";
 
     try {
       shaderProgram = p.createShader(vert, frag);
