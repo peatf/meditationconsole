@@ -17,28 +17,34 @@ const sketch = (p) => {
   let lastY = 0;
 
   p.setup = () => {
-      const ctx = canvasElement.getContext("2d", { willReadFrequently: true });
+  containerElement = document.querySelector(".animationScreen");
+  const w = containerElement?.offsetWidth || window.innerWidth;
+  const h = containerElement?.offsetHeight || window.innerHeight;
+  
+  const canvas = p.createCanvas(w, h);
+  canvasElement = canvas.elt; // Ensure canvasElement is assigned
 
-    containerElement = document.querySelector(".animationScreen");
-    const w = containerElement?.offsetWidth || window.innerWidth;
-    const h = containerElement?.offsetHeight || window.innerHeight;
-    const canvas = p.createCanvas(w, h);
-    
-    canvasElement = canvas.elt;
-    canvasElement.style.position = "absolute";
-    canvasElement.style.left = "50%";
-    canvasElement.style.top = "50%";
-    canvasElement.style.transform = "translate(-50%, -50%)";
-    canvasElement.style.touchAction = "none";
-    canvasElement.style.zIndex = "1";
-    canvasElement.style.userSelect = "none";
-    canvasElement.onselectstart = () => false;
-    
-    p.pixelDensity(1);
-    p.noStroke();
-    noiseGraphics = p.createGraphics(w, h);
-    generateNoiseTexture();
-  };
+  if (canvasElement) {
+    const ctx = canvasElement.getContext("2d", { willReadFrequently: true });
+  } else {
+    console.error("Canvas element not found!");
+  }
+
+  canvasElement.style.position = "absolute";
+  canvasElement.style.left = "50%";
+  canvasElement.style.top = "50%";
+  canvasElement.style.transform = "translate(-50%, -50%)";
+  canvasElement.style.touchAction = "none";
+  canvasElement.style.zIndex = "1";
+  canvasElement.style.userSelect = "none";
+  canvasElement.onselectstart = () => false;
+  
+  p.pixelDensity(1);
+  p.noStroke();
+  noiseGraphics = p.createGraphics(w, h);
+  generateNoiseTexture();
+};
+
 
   p.draw = () => {
     p.push();
