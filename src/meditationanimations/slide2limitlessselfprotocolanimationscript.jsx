@@ -38,7 +38,6 @@ const sketch = (p) => {
     if (p.frameCount % (60 - p.map(energyLevel, 0, 1, 10, 50)) === 0) {
       waves.push(new Wave());
     }
-
     for (let i = waves.length - 1; i >= 0; i--) {
       waves[i].update();
       waves[i].display();
@@ -47,12 +46,10 @@ const sketch = (p) => {
       }
     }
 
-    // Overlay the noise texture using SCREEN blend mode
     p.blendMode(p.SCREEN);
     p.image(noiseGraphics, 0, 0);
     p.blendMode(p.BLEND);
 
-    // Grain effect
     p.loadPixels();
     for (let i = 0; i < p.pixels.length; i += 4) {
       let grain = p.random(-10, 10);
@@ -75,24 +72,21 @@ const sketch = (p) => {
       this.noiseOffsetX = p.random(1000);
       this.noiseOffsetY = p.random(1000);
     }
-
     update() {
       this.radius += this.speed;
       this.lifespan -= 1;
     }
-
     isFinished() {
       return this.lifespan < 0;
     }
-
     display() {
       let baseColor = p.color(255, 150, 0, this.lifespan);
       let darkBeige = p.color(100, 90, 70, this.lifespan);
 
       p.push();
-      // Shift upward: 90% down from the top instead of at the very bottom
-      p.translate(p.width / 2, p.height * 0.9);
-      // Scale horizontally to reduce width
+      // Shift upward to 80% of the canvas height
+      p.translate(p.width / 2, p.height * 0.8);
+      // Scale horizontally to reduce the overall width
       p.scale(0.85, 1);
       for (let i = 0; i < this.segments; i++) {
         let angle = p.map(i, 0, this.segments, 0, p.TWO_PI);
@@ -137,12 +131,12 @@ const sketch = (p) => {
   const drawBackgroundGradient = () => {
     let backgroundColor1 = p.color(255, 200, 200);
     let backgroundColor2 = p.color(255, 100, 100);
-    // Center gradient at 90% height instead of the very bottom
+    // Center the gradient at 80% of the canvas height
     for (let r = p.height; r > 0; r -= 2) {
       let inter = p.map(r, 0, p.height, 1, 0);
       let c = p.lerpColor(backgroundColor1, backgroundColor2, inter);
       p.fill(c);
-      p.ellipse(p.width / 2, p.height * 0.9, r * 2, r * 2);
+      p.ellipse(p.width / 2, p.height * 0.8, r * 2, r * 2);
     }
   };
 
@@ -151,7 +145,6 @@ const sketch = (p) => {
     startY = p.mouseY;
     return false;
   };
-
   p.touchMoved = () => {
     let deltaY = startY - p.mouseY;
     energyLevel += deltaY * 0.002;
@@ -159,11 +152,9 @@ const sketch = (p) => {
     startY = p.mouseY;
     return false;
   };
-
   p.mousePressed = () => {
     startY = p.mouseY;
   };
-
   p.mouseDragged = () => {
     let deltaY = startY - p.mouseY;
     energyLevel += deltaY * 0.002;
