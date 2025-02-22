@@ -1,4 +1,4 @@
- "use client";
+"use client";
 import { ReactP5Wrapper } from "@p5-wrapper/react";
 
 export default function Slide7Animation() {
@@ -68,7 +68,7 @@ const sketch = (p) => {
     ];
     questionColor = colorPalette[2]; // Use dark brown for text
 
-    // Initialize blobs (fewer, larger, and slower)
+    // Initialize blobs (fewer, larger, using palette colors)
     for (let i = 0; i < numBlobs; i++) {
       let baseR = p.random(150, 250);
       let blobColor = p.random([colorPalette[1], colorPalette[2]]);
@@ -134,7 +134,8 @@ const sketch = (p) => {
     for (let i = 0; i < flowField.length; i++) {
       let v = flowField[i];
       let angle = p.noise(v.x * 0.005, v.y * 0.005, flowFieldZOffset) * p.TWO_PI * 2;
-      let vec = p5.Vector.fromAngle(angle);
+      // Use p.Vector instead of p5.Vector for instance mode:
+      let vec = p.Vector.fromAngle(angle);
       vec.setMag(particleSpeed);
 
       let sourceX = p.floor(v.x + vec.x);
@@ -151,6 +152,7 @@ const sketch = (p) => {
       p.pixels[destIdx + 2] = tempPixels[sourceIdx + 2];
       p.pixels[destIdx + 3] = tempPixels[sourceIdx + 3];
     }
+
     p.updatePixels();
     flowFieldZOffset += flowFieldIncrement;
   }
@@ -233,8 +235,6 @@ const sketch = (p) => {
     gfx.updatePixels();
   }
 
-  // Missing Functions Added Below:
-
   // Pixelation function: applies blocky pixelation to the provided graphics buffer.
   function applyPixelation(gfx, blockSize) {
     gfx.loadPixels();
@@ -301,20 +301,20 @@ const sketch = (p) => {
   }
 
   p.windowResized = function () {
-    resizeCanvas(windowWidth, windowHeight);
-    layerW = p.floor(width / 2);
-    layerH = p.floor(height / 2);
+    p.resizeCanvas(windowWidth, windowHeight);
+    layerW = p.floor(p.width / 2);
+    layerH = p.floor(p.height / 2);
 
     blobLayer = p.createGraphics(layerW, layerH);
     blobLayer.pixelDensity(1);
 
-    textLayer = p.createGraphics(width, height);
+    textLayer = p.createGraphics(p.width, p.height);
     textLayer.noSmooth();
 
-    gradientLayer = p.createGraphics(width, height);
+    gradientLayer = p.createGraphics(p.width, p.height);
     gradientLayer.pixelDensity(1);
 
-    noiseLayer = p.createGraphics(width, height);
+    noiseLayer = p.createGraphics(p.width, p.height);
     noiseLayer.pixelDensity(1);
 
     blobs = [];
@@ -336,6 +336,6 @@ const sketch = (p) => {
 
     flowField = [];
     initFlowField();
-    p.textSize(p.min(width, height) * 0.04);
+    p.textSize(p.min(p.width, p.height) * 0.04);
   };
 };
