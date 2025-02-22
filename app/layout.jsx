@@ -3,7 +3,7 @@ export default function RootLayout({ children }) {
     <html>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, 
-  user-scalable=no, maximum-scale=1.0" />
+              maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
         <title>Meditation Console</title>
       </head>
       <body>{children}</body>
