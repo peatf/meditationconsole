@@ -188,34 +188,31 @@ const sketch = (p) => {
 
   // TEXT
   function drawArtText() {
-    textLayer.clear();
-    textLayer.textWrap(p.WORD);
-    textLayer.textAlign(p.CENTER, p.CENTER);
-    textLayer.textSize(p.min(p.width, p.height) * 0.04);
+  textLayer.clear();
+  textLayer.textWrap(p.WORD);
+  textLayer.textAlign(p.CENTER, p.CENTER);
+  textLayer.textSize(p.min(p.width, p.height) * 0.04);
+  
+  // Set the bounding box for text:
+  // Use the center of the canvas as the anchor, and allow 80% of width.
+  // Using a height of half the canvas ensures enough space for multi-line wrapping.
+  let boxW = p.width * 0.8;
+  let boxH = p.height * 0.5;
+  let centerX = p.width / 2;
+  let centerY = p.height / 2;
+  
+  // Draw shadow/glow first with a slight offset
+  textLayer.fill(p.red(questionColor), p.green(questionColor), p.blue(questionColor), 50);
+  textLayer.text(question, centerX + 2, centerY + 2, boxW, boxH);
+  textLayer.filter(p.BLUR, 2);
+  
+  // Draw the main text on top
+  textLayer.fill(questionColor);
+  textLayer.text(question, centerX, centerY, boxW, boxH);
+  
+  p.image(textLayer, 0, 0);
+}
 
-    // Draw shadow/glow first
-    textLayer.fill(p.red(questionColor), p.green(questionColor), p.blue(questionColor), 50);
-    textLayer.text(
-      question,
-      p.width * 0.1 + 2,
-      p.height * 0.3 + 2,
-      p.width * 0.8,
-      p.height * 0.4
-    );
-    textLayer.filter(p.BLUR, 2);
-
-    // Draw main text on top
-    textLayer.fill(questionColor);
-    textLayer.text(
-      question,
-      p.width * 0.1,
-      p.height * 0.3,
-      p.width * 0.8,
-      p.height * 0.4
-    );
-
-    p.image(textLayer, 0, 0);
-  }
 
   // NOISE OVERLAY
   function applySubtleNoise(gfx) {
