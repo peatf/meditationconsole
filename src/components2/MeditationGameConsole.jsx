@@ -17,16 +17,17 @@ const Slide10Animation = dynamic(() => import("@/meditationanimations/slide10lim
 
 const slides = [
   { id: 1, text: "Are you willing and ready to connect with the limitless self?", type: "buttons", hasScreen: false },
-  { id: 2, text: "Swipe up to call up the limitless self.", type: "swipe", hasScreen: true, animation: <Slide2Animation /> },
+  { id: 2, text: "Continually swipe the screen upwards to call up the limitless self.", type: "swipe", hasScreen: true, animation: <Slide2Animation /> },
   { id: 3, text: "Slide to shift perspectives.", type: "slider", hasScreen: true, animation: <Slide3Animation /> },
-  { id: 4, text: "Keep tapping to dive deeper.", type: "tap", hasScreen: true, animation: <Slide4Animation /> },
+  { id: 4, text: "Keep tapping the screen to dive deeper.", type: "tap", hasScreen: true, animation: <Slide4Animation /> },
   { id: 5, text: "Pause and exhale to make space for the answers.", type: "pause", hasScreen: true, animation: <Slide5Animation /> },
-  { id: 6, text: "Affirm until solid", type: "buttons", hasScreen: true, customButton: "Affirm", animation: <Slide6Animation /> },
+  { id: 6, text: "Continue affirming until solid.", type: "buttons", hasScreen: true, customButton: "Affirm", animation: <Slide6Animation /> },
   { id: 7, text: "Pause and exhale to make space for the answers.", type: "pause", hasScreen: true, animation: <Slide7Animation /> },
-  { id: 8, text: "Affirm until solid", type: "buttons", hasScreen: true, customButton: "Affirm", animation: <Slide8Animation /> },
-  { id: 9, text: "Are you open to taking on this perspective?", type: "buttons", hasScreen: false },
-  { id: 10, text: "Swipe to collect the limitless energy.", type: "swipe", hasScreen: true, animation: <Slide10Animation /> },
+  { id: 8, text: "Continue affirming until solid.", type: "buttons", hasScreen: true, customButton: "Affirm", animation: <Slide8Animation /> },
+  { id: 9, text: "Are you open to taking on that last perspective?", type: "buttons", hasScreen: false },
+  { id: 10, text: "Swipe to collect the energy of the limitless self, and go on about your day.", type: "swipe", hasScreen: true, animation: <Slide10Animation /> },
 ];
+
 
 export default function MeditationGameConsole() {
   const [currentSlide, setCurrentSlide] = useState(0);
