@@ -98,13 +98,13 @@ const sketch = (p) => {
       float t_modified = t + cloudPattern;
       
       float bluePhase = sin(t_modified * pi2 + 1.0) * 0.5 + 0.5;
-      vec3 color = mix(mainColor, deepBlue,  bluePhase * 0.3);
+      vec3 color = mix(mainColor, deepBlue,   bluePhase * 0.3);
       
       float greenPhase = sin(t_modified * pi2 + 2.0) * 0.5 + 0.5;
-      color = mix(color, midTone,   greenPhase * 0.4);
+      color = mix(color, midTone,    greenPhase * 0.4);
       
       float warmPhase = sin(t_modified * pi2 + 3.0) * 0.5 + 0.5;
-      color = mix(color, shadow,    warmPhase * 0.5);
+      color = mix(color, shadow,     warmPhase * 0.5);
       
       float whiteBalance = smoothstep(0.2, 0.8, noise(uv * 2.0 + time * 0.1));
       color = mix(color, mainColor, whiteBalance * 0.6);
@@ -139,13 +139,15 @@ const sketch = (p) => {
     const canvas = p.createCanvas(w, h, p.WEBGL);
     const canvasElement = canvas.elt;
     canvasElement.style.position = "absolute";
-  canvasElement.style.left = "50%";
-  canvasElement.style.top = "50%";
-  canvasElement.style.transform = "translate(-50%, -50%)";
-  canvasElement.style.zIndex = "0";
-    // Ensure touch events register correctly on mobile:
-    canvasElement.style.touchAction = "manipulation";
+    canvasElement.style.left = "50%";
+    canvasElement.style.top = "50%";
+    canvasElement.style.transform = "translate(-50%, -50%)";
+    canvasElement.style.zIndex = "0";
 
+    // WebGL-specific fixes
+    p.pixelDensity(1); // Fix for mobile WebGL resolution
+    canvasElement.style.touchAction = "manipulation";
+    canvasElement.ontouchstart = e => e.preventDefault(); // Critical for iOS
 
     try {
       shaderProgram = p.createShader(vert, frag);
@@ -192,7 +194,8 @@ const sketch = (p) => {
   };
 
   p.touchStarted = () => {
-    pulse = 1.0;
-    return false;
-  };
+      pulse = 1.0;
+      return false; //  **<--VERY IMPORTANT: Allow event propagation on mobile**
+    };
+
 };
