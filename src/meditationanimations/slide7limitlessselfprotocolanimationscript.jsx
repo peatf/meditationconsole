@@ -184,36 +184,35 @@ const sketch = (p) => {
 
   // TEXT: Vertically center and allow wrapping on mobile
 function drawArtText() {
-  // Clear the offscreen text layer
+  // Clear and set up the textLayer
   textLayer.clear();
   textLayer.textWrap(p.WORD);
   textLayer.textAlign(p.CENTER, p.CENTER);
   textLayer.textSize(p.min(p.width, p.height) * 0.04);
   textLayer.textFont("Georgia");
 
-  // Calculate a bounding box centered on the canvas:
+  // Calculate bounding box: 80% of width, 50% of height, centered.
   let boxW = p.width * 0.8;
   let boxH = p.height * 0.5;
-  let centerX = p.width / 2;
-  let centerY = p.height / 2;
+  let boxX = (p.width - boxW) / 2;
+  let boxY = (p.height - boxH) / 2;
 
-  // Draw the drop shadow (subtle glow)
+  // Draw a soft shadow (glow) by drawing the text offset and with low opacity.
   textLayer.push();
-  // Set a low opacity fill for the shadow; adjust the alpha as needed
   textLayer.fill(p.red(questionColor), p.green(questionColor), p.blue(questionColor), 50);
-  // Draw the text slightly offset (by 2 pixels in both directions)
-  textLayer.text(question, centerX + 2, centerY + 2, boxW, boxH);
+  textLayer.text(question, boxX + 2, boxY + 2, boxW, boxH);
   textLayer.pop();
-  // Apply a slight blur to the shadow
-  textLayer.filter(p.BLUR, 2);
+  // Optionally, if you still want a blur effect, you can try a very slight blur:
+  // textLayer.filter(p.BLUR, 1);
 
-  // Draw the main text on top with full opacity
+  // Draw the main text on top in full opacity.
   textLayer.fill(questionColor);
-  textLayer.text(question, centerX, centerY, boxW, boxH);
+  textLayer.text(question, boxX, boxY, boxW, boxH);
 
-  // Render the text layer onto the main canvas
+  // Render the textLayer onto the main canvas.
   p.image(textLayer, 0, 0);
 }
+
 
 
   // NOISE OVERLAY
