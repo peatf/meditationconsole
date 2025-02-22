@@ -41,7 +41,7 @@ const sketch = (p) => {
 
     p.pixelDensity(1);
 
-    // Set up offscreen buffers at appropriate resolutions
+    // Set up offscreen buffers
     layerW = p.floor(w / 2);
     layerH = p.floor(h / 2);
 
@@ -66,9 +66,9 @@ const sketch = (p) => {
       p.color(213, 205, 163), // Light Yellow
       p.color(236, 203, 202), // Pink
     ];
-    questionColor = colorPalette[2]; // Use dark brown for text
+    questionColor = colorPalette[2];
 
-    // Initialize blobs (fewer, larger, using palette colors)
+    // Initialize blobs (larger, fewer, using palette colors)
     for (let i = 0; i < numBlobs; i++) {
       let baseR = p.random(150, 250);
       let blobColor = p.random([colorPalette[1], colorPalette[2]]);
@@ -134,7 +134,7 @@ const sketch = (p) => {
     for (let i = 0; i < flowField.length; i++) {
       let v = flowField[i];
       let angle = p.noise(v.x * 0.005, v.y * 0.005, flowFieldZOffset) * p.TWO_PI * 2;
-      // Instead of p.Vector.fromAngle(angle), use createVector with cosine and sine:
+      // Instead of p5.Vector.fromAngle, we use p.createVector with cosine and sine:
       let vec = p.createVector(p.cos(angle), p.sin(angle));
       vec.setMag(particleSpeed);
 
@@ -320,7 +320,7 @@ const sketch = (p) => {
     blobs = [];
     for (let i = 0; i < numBlobs; i++) {
       let baseR = p.random(150, 250);
-      let blobColor = p.random([colorPalette[1], colorPalette[2]]);
+      let blobColor = p.random(colorPalette.slice(1, 3));
       blobs.push({
         x: layerW / 2 + p.random(-layerW * 0.1, layerW * 0.1),
         y: layerH / 2 + p.random(-layerH * 0.1, layerH * 0.1),
