@@ -87,6 +87,37 @@ const sketch = (p) => {
     // Initialize Flow Field
     initFlowField();
   };
+function applyPixelation(gfx, blockSize) {
+  gfx.loadPixels();
+  let d = gfx.pixelDensity();
+  let totalW = gfx.width * d;
+  let totalH = gfx.height * d;
+
+  for (let y = 0; y < totalH; y += blockSize) {
+    for (let x = 0; x < totalW; x += blockSize) {
+      let idx = 4 * (x + y * totalW);
+      let r = gfx.pixels[idx + 0];
+      let g = gfx.pixels[idx + 1];
+      let b = gfx.pixels[idx + 2];
+      let a = gfx.pixels[idx + 3];
+
+      for (let py = 0; py < blockSize; py++) {
+        for (let px = 0; px < blockSize; px++) {
+          let x2 = x + px;
+          let y2 = y + py;
+          if (x2 < totalW && y2 < totalH) {
+            let idx2 = 4 * (x2 + y2 * totalW);
+            gfx.pixels[idx2 + 0] = r;
+            gfx.pixels[idx2 + 1] = g;
+            gfx.pixels[idx2 + 2] = b;
+            gfx.pixels[idx2 + 3] = a;
+          }
+        }
+      }
+    }
+  }
+  gfx.updatePixels();
+}
 
   p.draw = function () {
     p.background(colorPalette[0]);
