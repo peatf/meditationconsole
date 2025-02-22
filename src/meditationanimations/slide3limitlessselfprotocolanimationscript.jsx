@@ -14,7 +14,7 @@ const sketch = (p) => {
   let distortedBuffer;
   let startX = 0;
   let startY = 0;
-  let allowScroll = true;
+  let touchMovedEnough = false;
 
   p.setup = () => {
     const container = document.querySelector(".animationScreen");
@@ -22,7 +22,7 @@ const sketch = (p) => {
     let h = container ? container.offsetHeight : 600;
     const canvas = p.createCanvas(w, h);
 
-    // Center the canvas in the container
+    // Center the canvas
     const canvasElement = canvas.elt;
     canvasElement.style.position = "absolute";
     canvasElement.style.left = "50%";
@@ -33,8 +33,8 @@ const sketch = (p) => {
     objectSize = p.min(p.width, p.height) * 0.4;
     p.pixelDensity(1);
     p.noStroke();
-    normalBGColor = p.color(240); // Light gray
-    alteredBGColor = p.color(245, 231, 209); // Beige
+    normalBGColor = p.color(240);
+    alteredBGColor = p.color(245, 231, 209);
     distortedBuffer = p.createGraphics(p.width, p.height);
   };
 
@@ -138,32 +138,42 @@ const sketch = (p) => {
     dragging = false;
   };
 
-  p.touchStarted = () => {
-    startX = p.mouseX;
-    startY = p.mouseY;
+  p.touchStarted = (event) => {
+    if (p.touches.length > 0) {
+      startX = p.touches[0].x;
+      startY = p.touches[0].y;
+      touchMovedEnough = false;
 
-    if (p.touches.length > 0 && p.touches[0].x > dividerX - 50 && p.touches[0].x < dividerX + 50) {
-      dragging = true;
-      allowScroll = false;
-    } else {
-      allowScroll = true;
+      if (startX > dividerX - 50 && startX < dividerX + 50) {
+        dragging = true;
+        event.preventDefault(); // Stop browser scrolling immediately
+      }
     }
-    return true;
   };
 
-  p.touchMoved = () => {
-    if (allowScroll) return true; // Allow vertical scrolling when not dragging
+  p.touchMoved = (event) => {
+    if (!dragging) {
+      // Detect if the touch is mostly vertical (scrolling)
+      let dx = Math.abs(p.touches[0].x - startX);
+      let dy = Math.abs(p.touches[0].y - startY);
+
+      if (dy > dx * 1.5) {
+        // Vertical motion → allow scrolling
+        return true;
+      }
+    }
 
     if (dragging && p.touches.length > 0) {
       dividerX = p.constrain(p.touches[0].x, 50, p.width - 50);
+      touchMovedEnough = true;
+      event.preventDefault(); // Stop scrolling once dragging starts
     }
     return false;
   };
 
   p.touchEnded = () => {
     dragging = false;
-    allowScroll = true;
-    return false;
+    return touchMovedEnough ? false : true; // Only allow scrolling if no dragging happened
   };
 
   p.windowResized = () => {
