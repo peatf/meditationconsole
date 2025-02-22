@@ -80,7 +80,7 @@ const sketch = (p) => {
 
     p.textAlign(p.CENTER, p.CENTER);
     p.textSize(p.min(w, h) * 0.04);
-    p.textFont("Georgia");
+    p.textFont("sans-serif");
 
     initFlowField();
   };
