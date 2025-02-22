@@ -2,7 +2,21 @@
 import { ReactP5Wrapper } from "@p5-wrapper/react";
 
 export default function Slide2Animation() {
-  return <ReactP5Wrapper sketch={sketch} />;
+  return (
+    <div 
+      className="animationScreen" 
+      data-slide="2" // Add this attribute
+      style={{ 
+        position: "relative", 
+        width: "100%", 
+        height: "100%",
+        // Force hardware acceleration
+        transform: 'translateZ(0)'
+      }}
+    >
+      <ReactP5Wrapper sketch={sketch} />
+    </div>
+  );
 }
 
 const sketch = (p) => {
@@ -140,24 +154,30 @@ const sketch = (p) => {
   };
 
   p.touchStarted = (event) => {
-    // Only prevent default if the touch is on the canvas element
-    if (event.target === canvasElement) {
-      startY = p.mouseY;
-      touchBlocked = true;
-      event.preventDefault();
-      event.stopPropagation();
-    }
-  };
+  if (event.target === canvasElement) {
+    startY = p.mouseY;
+    touchBlocked = true;
+    event.stopImmediatePropagation();
+    event.preventDefault();
+    return false;
+  }
+};
 
-  p.touchMoved = (event) => {
-    if (touchBlocked && event.target === canvasElement) {
-      let deltaY = startY - p.mouseY;
-      energyLevel += deltaY * 0.002;
-      energyLevel = p.constrain(energyLevel, 0, 1);
-      startY = p.mouseY;
-      event.preventDefault();
-    }
-  };
+ p.touchMoved = (event) => {
+  if (touchBlocked) {
+    const currentY = p.mouseY;
+    const deltaY = startY - currentY;
+    energyLevel = p.constrain(energyLevel + deltaY * 0.002, 0, 1);
+    startY = currentY;
+    
+    // Force hardware rendering update
+    canvasElement.style.transform = `translate(-50%, -50%) perspective(1000px)`;
+    
+    event.stopPropagation();
+    event.preventDefault();
+    return false;
+  }
+};
 
   p.touchEnded = (event) => {
     // Only reset touchBlocked if the touch ended on the canvas
