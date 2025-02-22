@@ -13,6 +13,8 @@ const sketch = (p) => {
   let touchBlocked = false;
   let canvasElement;
   let containerElement;
+  let isDragging = false;
+  let lastY = 0;
 
   p.setup = () => {
     containerElement = document.querySelector(".animationScreen");
@@ -27,8 +29,6 @@ const sketch = (p) => {
     canvasElement.style.transform = "translate(-50%, -50%)";
     canvasElement.style.touchAction = "none";
     canvasElement.style.zIndex = "1";
-    
-    // Mobile-specific click prevention
     canvasElement.style.userSelect = "none";
     canvasElement.onselectstart = () => false;
     
@@ -41,7 +41,7 @@ const sketch = (p) => {
   p.draw = () => {
     p.push();
     const s = 0.7;
-    p.translate((p.width - p.width * s) / 2, (p.height - p.height * s) / 2);
+    p.translate((p.width - p.width * s)/2, (p.height - p.height * s)/2);
     p.scale(s);
 
     drawBackgroundGradient();
@@ -92,7 +92,7 @@ const sketch = (p) => {
       let baseColor = p.color(255, 150, 0, this.lifespan);
       let darkBeige = p.color(100, 90, 70, this.lifespan);
       p.push();
-      p.translate(p.width / 2, p.height);
+      p.translate(p.width/2, p.height);
       for (let i = 0; i < this.segments; i++) {
         let angle = p.map(i, 0, this.segments, 0, p.TWO_PI);
         let noiseX = this.noiseOffsetX + this.radius * 0.01 * p.cos(angle);
@@ -138,38 +138,70 @@ const sketch = (p) => {
       let inter = p.map(r, 0, p.height, 1, 0);
       let c = p.lerpColor(backgroundColor1, backgroundColor2, inter);
       p.fill(c);
-      p.ellipse(p.width / 2, p.height, r * 2, r * 2);
+      p.ellipse(p.width/2, p.height, r * 2, r * 2);
     }
   };
 
-  // Enhanced touch handlers
+  // Unified input handling
+  const handleStart = (y) => {
+    isDragging = true;
+    lastY = y;
+  };
+
+  const handleMove = (currentY) => {
+    if (isDragging) {
+      const deltaY = lastY - currentY;
+      energyLevel += deltaY * 0.002;
+      energyLevel = p.constrain(energyLevel, 0, 1);
+      lastY = currentY;
+    }
+  };
+
+  const handleEnd = () => {
+    isDragging = false;
+  };
+
+  // Mouse handlers
+  p.mousePressed = () => {
+    if (p.mouseX > 0 && p.mouseX < p.width && p.mouseY > 0 && p.mouseY < p.height) {
+      handleStart(p.mouseY);
+      return false;
+    }
+    return true;
+  };
+
+  p.mouseDragged = () => {
+    handleMove(p.mouseY);
+    return false;
+  };
+
+  p.mouseReleased = () => {
+    handleEnd();
+    return true;
+  };
+
+  // Touch handlers
   p.touchStarted = (event) => {
     const touch = event.touches[0];
     const rect = canvasElement.getBoundingClientRect();
     
-    // Check if touch is within canvas bounds
     if (touch.clientX >= rect.left && 
         touch.clientX <= rect.right && 
         touch.clientY >= rect.top && 
         touch.clientY <= rect.bottom) {
-      startY = touch.clientY;
-      touchBlocked = true;
+      handleStart(touch.clientY);
       event.preventDefault();
       event.stopPropagation();
       return false;
     }
-    return true; // Allow other elements to handle
+    return true;
   };
 
   p.touchMoved = (event) => {
-    if (touchBlocked) {
+    if (isDragging) {
       const touch = event.touches[0];
-      const deltaY = startY - touch.clientY;
-      energyLevel = p.constrain(energyLevel + deltaY * 0.002, 0, 1);
-      startY = touch.clientY;
-      
-      // Prevent rubber-band scrolling on iOS
-      if (Math.abs(deltaY) > 2) {
+      handleMove(touch.clientY);
+      if (Math.abs(touch.clientY - lastY) > 2) {
         event.preventDefault();
         event.stopPropagation();
       }
@@ -179,7 +211,7 @@ const sketch = (p) => {
   };
 
   p.touchEnded = () => {
-    touchBlocked = false;
+    handleEnd();
     return true;
   };
 
