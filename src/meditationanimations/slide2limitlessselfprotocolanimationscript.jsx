@@ -11,15 +11,16 @@ const sketch = (p) => {
   let startY = 0;
   let noiseGraphics;
   let touchBlocked = false;
+  let canvasElement; // store the canvas element
 
   p.setup = () => {
     const container = document.querySelector(".animationScreen");
     let w = container ? container.offsetWidth : window.innerWidth;
     let h = container ? container.offsetHeight : window.innerHeight;
     const canvas = p.createCanvas(w, h);
+    canvasElement = canvas.elt;
 
     // Center the canvas
-    const canvasElement = canvas.elt;
     canvasElement.style.position = "absolute";
     canvasElement.style.left = "50%";
     canvasElement.style.top = "50%";
@@ -34,20 +35,16 @@ const sketch = (p) => {
   };
 
   p.draw = () => {
-    // Draw scaled artwork (70% of full size)
     p.push();
-    const s = 0.7;
-    // Center the scaled drawing within the full canvas
+    const s = 0.7; // scale factor (70%)
     p.translate((p.width - p.width * s) / 2, (p.height - p.height * s) / 2);
     p.scale(s);
 
     drawBackgroundGradient();
 
-    // Add new wave periodically based on energyLevel
     if (p.frameCount % (60 - p.map(energyLevel, 0, 1, 10, 50)) === 0) {
       waves.push(new Wave());
     }
-    // Update & display waves
     for (let i = waves.length - 1; i >= 0; i--) {
       waves[i].update();
       waves[i].display();
@@ -55,12 +52,10 @@ const sketch = (p) => {
     }
     p.pop();
 
-    // Fullscreen dark-blue noise overlay
     p.blendMode(p.SCREEN);
     p.image(noiseGraphics, 0, 0);
     p.blendMode(p.BLEND);
 
-    // Grain effect
     p.loadPixels();
     for (let i = 0; i < p.pixels.length; i += 4) {
       let grain = p.random(-10, 10);
@@ -144,16 +139,17 @@ const sketch = (p) => {
     }
   };
 
-  // --- Touch Handlers for Slide2 ---
   p.touchStarted = (event) => {
-    // Always block scrolling on the canvas for Slide2
-    startY = p.mouseY;
-    touchBlocked = true;
-    event.preventDefault();
+    // Only prevent default if the touch is on the canvas element
+    if (event.target === canvasElement) {
+      startY = p.mouseY;
+      touchBlocked = true;
+      event.preventDefault();
+    }
   };
 
   p.touchMoved = (event) => {
-    if (touchBlocked) {
+    if (touchBlocked && event.target === canvasElement) {
       let deltaY = startY - p.mouseY;
       energyLevel += deltaY * 0.002;
       energyLevel = p.constrain(energyLevel, 0, 1);
@@ -162,8 +158,11 @@ const sketch = (p) => {
     }
   };
 
-  p.touchEnded = () => {
-    touchBlocked = false;
+  p.touchEnded = (event) => {
+    // Only reset touchBlocked if the touch ended on the canvas
+    if (event.target === canvasElement) {
+      touchBlocked = false;
+    }
   };
 
   p.windowResized = () => {
