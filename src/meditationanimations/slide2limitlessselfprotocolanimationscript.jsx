@@ -9,8 +9,8 @@ const sketch = (p) => {
   let energyLevel = 0;
   let waves = [];
   let startY = 0;
-  let startX = 0;
   let noiseGraphics;
+  let touchBlocked = false; // NEW: Flag to track if scrolling should be blocked
 
   p.setup = () => {
     const container = document.querySelector(".animationScreen");
@@ -23,6 +23,7 @@ const sketch = (p) => {
       h = window.innerHeight;
     }
     const canvas = p.createCanvas(w, h);
+
     // Center the canvas
     const canvasElement = canvas.elt;
     canvasElement.style.position = "absolute";
@@ -37,18 +38,14 @@ const sketch = (p) => {
   };
 
   p.draw = () => {
-    // Draw the background gradient and waves scaled down by 30%
     p.push();
     const s = 0.7; // scale factor (70%)
-    // Center the scaled drawing in the full canvas:
     p.translate((p.width - p.width * s) / 2, (p.height - p.height * s) / 2);
     p.scale(s);
 
     drawBackgroundGradient();
 
-    if (
-      p.frameCount % (60 - p.map(energyLevel, 0, 1, 10, 50)) === 0
-    ) {
+    if (p.frameCount % (60 - p.map(energyLevel, 0, 1, 10, 50)) === 0) {
       waves.push(new Wave());
     }
     for (let i = waves.length - 1; i >= 0; i--) {
@@ -60,12 +57,10 @@ const sketch = (p) => {
     }
     p.pop();
 
-    // Draw the full-size noise overlay (dark blue coverage remains full screen)
     p.blendMode(p.SCREEN);
     p.image(noiseGraphics, 0, 0);
     p.blendMode(p.BLEND);
 
-    // Grain effect (post-processing)
     p.loadPixels();
     for (let i = 0; i < p.pixels.length; i += 4) {
       let grain = p.random(-10, 10);
@@ -75,7 +70,6 @@ const sketch = (p) => {
     }
     p.updatePixels();
 
-    // Apply a subtle blur
     p.filter(p.BLUR, 0.75);
   };
 
@@ -101,12 +95,10 @@ const sketch = (p) => {
     }
 
     display() {
-      // Bright orange wave with dark beige fade
       let baseColor = p.color(255, 150, 0, this.lifespan);
       let darkBeige = p.color(100, 90, 70, this.lifespan);
 
       p.push();
-      // Original code centers waves at bottom; this now happens within the scaled context.
       p.translate(p.width / 2, p.height);
       for (let i = 0; i < this.segments; i++) {
         let angle = p.map(i, 0, this.segments, 0, p.TWO_PI);
@@ -119,8 +111,7 @@ const sketch = (p) => {
 
         let inter = p.map(this.radius, 0, p.width, 0, 1);
         let c = p.lerpColor(baseColor, darkBeige, inter);
-        let colorOffset = p
-          .noise(this.radius * 0.02, i * 0.05, p.frameCount * 0.01) * 50 - 25;
+        let colorOffset = p.noise(this.radius * 0.02, i * 0.05, p.frameCount * 0.01) * 50 - 25;
         let r = p.constrain(p.red(c) + colorOffset, 0, 255);
         let g = p.constrain(p.green(c) + colorOffset, 0, 255);
         let b = p.constrain(p.blue(c) + colorOffset, 0, 255);
@@ -137,7 +128,6 @@ const sketch = (p) => {
     }
   }
 
-  // Generate noise texture with a subtle navy blue tint
   const generateNoiseTexture = () => {
     noiseGraphics.noStroke();
     for (let x = 0; x < noiseGraphics.width; x++) {
@@ -150,7 +140,6 @@ const sketch = (p) => {
     }
   };
 
-  // Draw a reddish radial gradient background
   const drawBackgroundGradient = () => {
     let backgroundColor1 = p.color(255, 200, 200);
     let backgroundColor2 = p.color(255, 100, 100);
@@ -162,61 +151,32 @@ const sketch = (p) => {
     }
   };
 
-  // Input handling
-  p.touchStarted = () => {
-    startX = p.mouseX;
+  p.touchStarted = (event) => {
     startY = p.mouseY;
-    // Let the event propagate initially
-    return true;
+    touchBlocked = true;
+    event.preventDefault(); // FULLY STOP SCROLLING
   };
 
-  p.touchMoved = () => {
-    let deltaY = startY - p.mouseY;
-    let deltaX = p.mouseX - startX;
-
-    energyLevel += deltaY * 0.002;
-    energyLevel = p.constrain(energyLevel, 0, 1);
-    startY = p.mouseY;
-    startX = p.mouseX;
-
-    // If the vertical movement is larger than horizontal, assume scrolling (allow default behavior)
-    if (Math.abs(deltaY) > Math.abs(deltaX)) {
-      return true;
+  p.touchMoved = (event) => {
+    if (touchBlocked) {
+      let deltaY = startY - p.mouseY;
+      energyLevel += deltaY * 0.002;
+      energyLevel = p.constrain(energyLevel, 0, 1);
+      startY = p.mouseY;
+      event.preventDefault(); // Keep blocking scrolling
     }
-    // Otherwise, prevent default behavior for horizontal interactions
-    return false;
   };
 
-  p.mousePressed = () => {
-    startY = p.mouseY;
-  };
-
-  p.mouseDragged = () => {
-    let deltaY = startY - p.mouseY;
-    energyLevel += deltaY * 0.002;
-    energyLevel = p.constrain(energyLevel, 0, 1);
-    startY = p.mouseY;
+  p.touchEnded = () => {
+    touchBlocked = false; // Allow scrolling again
   };
 
   p.windowResized = () => {
     const container = document.querySelector(".animationScreen");
-    let w, h;
-    if (container) {
-      w = container.offsetWidth;
-      h = container.offsetHeight;
-    } else {
-      w = window.innerWidth;
-      h = window.innerHeight;
-    }
+    let w = container ? container.offsetWidth : window.innerWidth;
+    let h = container ? container.offsetHeight : window.innerHeight;
     p.resizeCanvas(w, h);
-    const canvasElement = p.canvas.elt;
-    canvasElement.style.position = "absolute";
-    canvasElement.style.left = "50%";
-    canvasElement.style.top = "50%";
-    canvasElement.style.transform = "translate(-50%, -50%)";
-
     noiseGraphics = p.createGraphics(p.width, p.height);
     generateNoiseTexture();
   };
 };
-
