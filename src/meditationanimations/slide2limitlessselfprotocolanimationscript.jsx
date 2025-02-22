@@ -11,22 +11,27 @@ const sketch = (p) => {
   let startY = 0;
   let noiseGraphics;
   let touchBlocked = false;
+  let canvasElement;
+  let containerElement;
 
   p.setup = () => {
-    const container = document.querySelector(".animationScreen");
-    let w = container ? container.offsetWidth : window.innerWidth;
-    let h = container ? container.offsetHeight : window.innerHeight;
+    containerElement = document.querySelector(".animationScreen");
+    const w = containerElement?.offsetWidth || window.innerWidth;
+    const h = containerElement?.offsetHeight || window.innerHeight;
     const canvas = p.createCanvas(w, h);
-
-    // Center the canvas
-    const canvasElement = canvas.elt;
+    
+    canvasElement = canvas.elt;
     canvasElement.style.position = "absolute";
     canvasElement.style.left = "50%";
     canvasElement.style.top = "50%";
     canvasElement.style.transform = "translate(-50%, -50%)";
-    // Prevent default touch scrolling on the canvas
     canvasElement.style.touchAction = "none";
-
+    canvasElement.style.zIndex = "1";
+    
+    // Mobile-specific click prevention
+    canvasElement.style.userSelect = "none";
+    canvasElement.onselectstart = () => false;
+    
     p.pixelDensity(1);
     p.noStroke();
     noiseGraphics = p.createGraphics(w, h);
@@ -34,20 +39,16 @@ const sketch = (p) => {
   };
 
   p.draw = () => {
-    // Draw scaled artwork (70% of full size)
     p.push();
     const s = 0.7;
-    // Center the scaled drawing within the full canvas
     p.translate((p.width - p.width * s) / 2, (p.height - p.height * s) / 2);
     p.scale(s);
 
     drawBackgroundGradient();
 
-    // Add new wave periodically based on energyLevel
     if (p.frameCount % (60 - p.map(energyLevel, 0, 1, 10, 50)) === 0) {
       waves.push(new Wave());
     }
-    // Update & display waves
     for (let i = waves.length - 1; i >= 0; i--) {
       waves[i].update();
       waves[i].display();
@@ -55,12 +56,10 @@ const sketch = (p) => {
     }
     p.pop();
 
-    // Fullscreen dark-blue noise overlay
     p.blendMode(p.SCREEN);
     p.image(noiseGraphics, 0, 0);
     p.blendMode(p.BLEND);
 
-    // Grain effect
     p.loadPixels();
     for (let i = 0; i < p.pixels.length; i += 4) {
       let grain = p.random(-10, 10);
@@ -69,7 +68,6 @@ const sketch = (p) => {
       p.pixels[i + 2] += grain;
     }
     p.updatePixels();
-
     p.filter(p.BLUR, 0.75);
   };
 
@@ -144,32 +142,50 @@ const sketch = (p) => {
     }
   };
 
-  // --- Touch Handlers for Slide2 ---
+  // Enhanced touch handlers
   p.touchStarted = (event) => {
-    // Always block scrolling on the canvas for Slide2
-    startY = p.mouseY;
-    touchBlocked = true;
-    event.preventDefault();
+    const touch = event.touches[0];
+    const rect = canvasElement.getBoundingClientRect();
+    
+    // Check if touch is within canvas bounds
+    if (touch.clientX >= rect.left && 
+        touch.clientX <= rect.right && 
+        touch.clientY >= rect.top && 
+        touch.clientY <= rect.bottom) {
+      startY = touch.clientY;
+      touchBlocked = true;
+      event.preventDefault();
+      event.stopPropagation();
+      return false;
+    }
+    return true; // Allow other elements to handle
   };
 
   p.touchMoved = (event) => {
     if (touchBlocked) {
-      let deltaY = startY - p.mouseY;
-      energyLevel += deltaY * 0.002;
-      energyLevel = p.constrain(energyLevel, 0, 1);
-      startY = p.mouseY;
-      event.preventDefault();
+      const touch = event.touches[0];
+      const deltaY = startY - touch.clientY;
+      energyLevel = p.constrain(energyLevel + deltaY * 0.002, 0, 1);
+      startY = touch.clientY;
+      
+      // Prevent rubber-band scrolling on iOS
+      if (Math.abs(deltaY) > 2) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      return false;
     }
+    return true;
   };
 
   p.touchEnded = () => {
     touchBlocked = false;
+    return true;
   };
 
   p.windowResized = () => {
-    const container = document.querySelector(".animationScreen");
-    let w = container ? container.offsetWidth : window.innerWidth;
-    let h = container ? container.offsetHeight : window.innerHeight;
+    const w = containerElement?.offsetWidth || window.innerWidth;
+    const h = containerElement?.offsetHeight || window.innerHeight;
     p.resizeCanvas(w, h);
     noiseGraphics = p.createGraphics(p.width, p.height);
     generateNoiseTexture();
