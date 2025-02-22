@@ -14,8 +14,7 @@ const sketch = (p) => {
   let shouldUpdatePixels = true;
   let canvasElement, containerElement;
 
-  // Define helper functions as declarations so they are hoisted
-
+  // Helper functions declared so they're hoisted
   function generateNoiseTexture() {
     noiseGraphics.noStroke();
     for (let x = 0; x < noiseGraphics.width; x++) {
@@ -51,10 +50,12 @@ const sketch = (p) => {
   }
 
   p.setup = () => {
+    // Grab the container that holds the animation
     containerElement = document.querySelector(".animationScreen");
     const w = containerElement?.offsetWidth || window.innerWidth;
     const h = containerElement?.offsetHeight || window.innerHeight;
 
+    // Create canvas
     const canvas = p.createCanvas(w, h);
     canvasElement = canvas.elt;
 
@@ -64,13 +65,14 @@ const sketch = (p) => {
       console.error("Canvas element not found!");
     }
 
+    // Style the canvas so it is centered and doesn't block overlay buttons
     Object.assign(canvasElement.style, {
       position: "absolute",
       left: "50%",
       top: "50%",
       transform: "translate(-50%, -50%)",
       touchAction: "none",
-      zIndex: "1",
+      zIndex: "0", // Lower than navigation buttons
       userSelect: "none",
     });
 
@@ -165,7 +167,7 @@ const sketch = (p) => {
     }
   }
 
-  // Unified swipe handler for both mouse and touch events.
+  // Unified swipe handler for both mouse and touch events
   const handleSwipe = (y) => {
     if (isDragging) {
       const deltaY = lastY - y;
@@ -206,7 +208,6 @@ const sketch = (p) => {
     return true;
   };
 
-  // Responsive resizing
   p.windowResized = () => {
     const newWidth = containerElement?.offsetWidth || window.innerWidth;
     const newHeight = containerElement?.offsetHeight || window.innerHeight;
