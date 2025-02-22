@@ -6,296 +6,199 @@ export default function Slide7Animation() {
 }
 
 const sketch = (p) => {
-  ////////////////////////////////////////////
-  // Pastel Meta-Balls + Blur + Dither + Glitch
-  // Single Question Edition with Mobile Text Wrapping
-  ////////////////////////////////////////////
-
-  // SINGLE QUESTION
-  const question = "What do you believe is the perspective the limitless self has about your reality right now?";
-
-  // TEXT FADE
-  let questionAlpha = 0;
-  let questionFadingIn = true;
-
-  // META-BALLS
-  let numBlobs = 5; // Adjust how many "blobs" you want
   let blobs = [];
-
-  // OFFSCREEN LAYER (lower res => pixelation + speed)
-  let blobLayer;
+  let numBlobs = 4; // Fewer, larger blobs
+  let blobLayer, textLayer, gradientLayer, noiseLayer;
   let layerW, layerH;
 
-  // SEPARATE TEXT LAYER
-  let textLayer;
+  let question = "How do you think your limitless self perceives your reality in this moment?";
+  let questionAlpha = 255;
+  let questionColor;
+  let colorPalette = [];
 
-  // GLITCH
-  let glitchActive = false;
-  let glitchTimer = 0;
-  let glitchDuration = 25; // frames of glitch
+  // Flow Field
+  let flowField = [];
+  let flowFieldResolution = 20;
+  let flowFieldZOffset = 0;
+  let flowFieldIncrement = 0.01;
+  let particleSpeed = 1;
 
-  p.setup = function() {
-    // Create canvas with container dimensions
-    const container = document.querySelector('.animationScreen');
+  p.setup = function () {
+    const container = document.querySelector(".animationScreen");
     let w = container ? container.offsetWidth : 800;
     let h = container ? container.offsetHeight : 600;
     const canvas = p.createCanvas(w, h);
-    
-    // Center the canvas in the container
-    const canvasElement = canvas.elt;
-    canvasElement.style.position = 'absolute';
-    canvasElement.style.left = '50%';
-    canvasElement.style.top = '50%';
-    canvasElement.style.transform = 'translate(-50%, -50%)';
-    
-    p.pixelDensity(1);
-    p.noSmooth(); // Keep a pixelly vibe when scaling up
 
-    // Offscreen buffer at half resolution for the meta-balls
+    // Center the canvas
+    const canvasElement = canvas.elt;
+    canvasElement.style.position = "absolute";
+    canvasElement.style.left = "50%";
+    canvasElement.style.top = "50%";
+    canvasElement.style.transform = "translate(-50%, -50%)";
+
+    p.pixelDensity(1);
+
     layerW = p.floor(w / 2);
     layerH = p.floor(h / 2);
+
     blobLayer = p.createGraphics(layerW, layerH);
     blobLayer.pixelDensity(1);
 
-    // Offscreen layer for text (full size)
     textLayer = p.createGraphics(w, h);
-    textLayer.pixelDensity(1);
     textLayer.noSmooth();
 
-    // Create random meta-balls
+    gradientLayer = p.createGraphics(w, h);
+    gradientLayer.pixelDensity(1);
+
+    noiseLayer = p.createGraphics(w, h);
+    noiseLayer.pixelDensity(1);
+
+    // Extracted colors (soft pastel palette)
+    colorPalette = [
+      p.color(248, 237, 181),
+      p.color(237, 156, 120),
+      p.color(58, 45, 43),
+      p.color(213, 205, 163),
+      p.color(236, 203, 202),
+    ];
+    questionColor = colorPalette[2];
+
+    // Initialize blobs (larger, fewer, using palette colors)
     for (let i = 0; i < numBlobs; i++) {
+      let baseR = p.random(150, 250);
+      let blobColor = p.random([colorPalette[1], colorPalette[2]]);
       blobs.push({
-        x: p.random(layerW),
-        y: p.random(layerH),
-        r: p.random(40, 80), // radius
-        dx: p.random(-1, 1),
-        dy: p.random(-1, 1)
+        x: layerW / 2 + p.random(-layerW * 0.1, layerW * 0.1),
+        y: layerH / 2 + p.random(-layerH * 0.1, layerH * 0.1),
+        baseR: baseR,
+        r: baseR,
+        dx: p.random(-0.2, 0.2),
+        dy: p.random(-0.2, 0.2),
+        noiseOffset: p.random(1000),
+        morphSpeed: p.random(0.005, 0.015),
+        color: blobColor,
       });
     }
 
-    // Text style
     p.textAlign(p.CENTER, p.CENTER);
-    p.textSize(p.min(w, h) * 0.06);
-    p.textFont("sans-serif");
-  }
+    p.textSize(p.min(w, h) * 0.04);
+    p.textFont("Georgia");
 
-  p.draw = function() {
-    p.background(245, 240, 235); // A soft, warm background
+    // Initialize Flow Field
+    initFlowField();
+  };
 
-    //-----------------------------------------
-    // 1) DRAW META-BALLS (half-res) + BLUR + DITHER
-    //-----------------------------------------
-    drawMetaBalls(blobLayer);
-    blobLayer.filter(p.BLUR, 3); // Big blur for dreamy edges
-    applyBayerDither(blobLayer);
-    // Scale up to main canvas
+  p.draw = function () {
+    p.background(colorPalette[0]);
+
+    drawIrregularOrbs(blobLayer);
+    applyPixelation(blobLayer, 3);
+    blobLayer.filter(p.BLUR, 3);
+    applyEdgeNoise(blobLayer);
     p.image(blobLayer, 0, 0, p.width, p.height);
 
-    //-----------------------------------------
-    // 2) DRAW/UPDATE ARTISTIC TEXT
-    //-----------------------------------------
-    updateQuestionFade();
-    drawArtText(); // Offscreen text, then blur/dither, then blend
+    drawSubtleGradient(gradientLayer);
+    p.image(gradientLayer, 0, 0);
 
-    //-----------------------------------------
-    // 3) GLITCH if active
-    //-----------------------------------------
-    if (glitchActive) {
-      glitchTimer++;
-      applyGlitch();
-      if (glitchTimer > glitchDuration) {
-        glitchActive = false;
-        glitchTimer = 0;
+    drawText();
+
+    applyFlowFieldDistortion();
+    applySubtleNoise(noiseLayer);
+    p.image(noiseLayer, 0, 0);
+  };
+
+  function initFlowField() {
+    for (let y = 0; y < p.height; y += flowFieldResolution) {
+      for (let x = 0; x < p.width; x += flowFieldResolution) {
+        flowField.push(p.createVector(x, y));
       }
     }
-
-    //-----------------------------------------
-    // 4) FINAL GRAIN PASS
-    //-----------------------------------------
-    applyGrain(5); // ±5 brightness shift
   }
 
-  function drawMetaBalls(gfx) {
-    gfx.loadPixels();
+  function applyFlowFieldDistortion() {
+    p.loadPixels();
+    let tempPixels = p.pixels.slice();
 
-    // Move each blob
+    for (let i = 0; i < flowField.length; i++) {
+      let p1 = flowField[i];
+      let angle = p.noise(p1.x * 0.005, p1.y * 0.005, flowFieldZOffset) * p.TWO_PI * 2;
+      let v = p5.Vector.fromAngle(angle);
+      v.setMag(particleSpeed);
+
+      let sourceX = p.floor(p1.x + v.x);
+      let sourceY = p.floor(p1.y + v.y);
+
+      sourceX = p.constrain(sourceX, 0, p.width - 1);
+      sourceY = p.constrain(sourceY, 0, p.height - 1);
+
+      let sourceIdx = (sourceY * p.width + sourceX) * 4;
+      let destIdx = (p.floor(p1.y) * p.width + p.floor(p1.x)) * 4;
+
+      p.pixels[destIdx] = tempPixels[sourceIdx];
+      p.pixels[destIdx + 1] = tempPixels[sourceIdx + 1];
+      p.pixels[destIdx + 2] = tempPixels[sourceIdx + 2];
+      p.pixels[destIdx + 3] = tempPixels[sourceIdx + 3];
+    }
+
+    p.updatePixels();
+    flowFieldZOffset += flowFieldIncrement;
+  }
+
+  function drawIrregularOrbs(gfx) {
+    gfx.clear();
+    gfx.noStroke();
+
     for (let b of blobs) {
+      let n = p.noise(b.noiseOffset + p.frameCount * b.morphSpeed);
+      b.r = b.baseR * (1 + 0.3 * (n - 0.5));
+
+      gfx.fill(b.color);
+      gfx.ellipse(b.x, b.y, b.r * 2, b.r * 2);
+
       b.x += b.dx;
       b.y += b.dy;
-      // Bounce off edges in the offscreen layer
-      if (b.x < 0 || b.x > layerW) b.dx *= -1;
-      if (b.y < 0 || b.y > layerH) b.dy *= -1;
+      if (b.x < -b.r || b.x > gfx.width + b.r) b.dx *= -1;
+      if (b.y < -b.r || b.y > gfx.height + b.r) b.dy *= -1;
     }
-
-    // Predefine pastel color sets & thresholds
-    let pastel1 = p.color(255, 230, 240); // Pinkish
-    let pastel2 = p.color(250, 240, 200); // Soft peach
-    let pastel3 = p.color(220, 230, 255); // Baby blue
-    let thresholds = [0.8, 2.0, 3.5]; // Tune these as needed
-
-    const d = 1; // Use fixed pixel density of 1
-    for (let y = 0; y < gfx.height; y++) {
-      for (let x = 0; x < gfx.width; x++) {
-        let fieldValue = 0;
-        for (let b of blobs) {
-          let dx = x - b.x;
-          let dy = y - b.y;
-          let distSq = dx * dx + dy * dy;
-          if (distSq < 0.0001) distSq = 0.0001;
-          fieldValue += (b.r * b.r) / distSq;
-        }
-
-        let c = p.color(255, 255, 255, 0);
-        if (fieldValue > thresholds[0]) c = pastel1;
-        if (fieldValue > thresholds[1]) c = pastel2;
-        if (fieldValue > thresholds[2]) c = pastel3;
-
-        let index = 4 * (x + y * gfx.width);
-        gfx.pixels[index + 0] = p.red(c);
-        gfx.pixels[index + 1] = p.green(c);
-        gfx.pixels[index + 2] = p.blue(c);
-        gfx.pixels[index + 3] = p.alpha(c) ? p.alpha(c) : 255;
-      }
-    }
-    gfx.updatePixels();
   }
 
-  function drawArtText() {
-    // Clear text layer each frame
+  function drawSubtleGradient(gfx) {
+    gfx.clear();
+    gfx.noStroke();
+
+    for (let y = 0; y < gfx.height; y++) {
+      let t = y / (gfx.height - 1);
+      let c = p.lerpColor(colorPalette[0], colorPalette[4], t);
+      gfx.stroke(c);
+      gfx.line(0, y, gfx.width, y);
+    }
+  }
+
+  function drawText() {
     textLayer.clear();
-
-    // Enable word wrapping
     textLayer.textWrap(p.WORD);
-
-    // Set text properties
-    textLayer.fill(40, 30, 30, questionAlpha);
     textLayer.textAlign(p.CENTER, p.CENTER);
-    textLayer.textSize(p.min(p.width, p.height) * 0.06);
+    textLayer.textSize(p.min(p.width, p.height) * 0.04);
 
-    // Draw the question within a bounding box so it stacks on small screens:
-    // left margin = width * 0.1, available width = width * 0.8,
-    // starting at height * 0.3, with available height = height * 0.4.
-    textLayer.text(question, p.width * 0.1, p.height * 0.3, p.width * 0.8, p.height * 0.4);
-
-    // Blur the text for a dreamy edge
+    textLayer.fill(p.red(questionColor), p.green(questionColor), p.blue(questionColor), 50);
+    textLayer.text(question, p.width * 0.1 + 2, p.height * 0.3 + 2, p.width * 0.8, p.height * 0.4);
     textLayer.filter(p.BLUR, 2);
 
-    // Dither the text for a digital artifact vibe
-    applyBayerDither(textLayer);
-
-    // Blend it onto the main canvas
-    p.push();
-    p.blendMode(p.MULTIPLY);
+    textLayer.fill(questionColor);
+    textLayer.text(question, p.width * 0.1, p.height * 0.3, p.width * 0.8, p.height * 0.4);
     p.image(textLayer, 0, 0);
-    p.pop();
   }
 
-  function updateQuestionFade() {
-    // Only fade in once
-    if (questionFadingIn) {
-      questionAlpha += 4;
-      if (questionAlpha >= 255) {
-        questionAlpha = 255;
-        questionFadingIn = false;
-      }
-    }
-  }
-
-  function applyBayerDither(gfx) {
+  function applySubtleNoise(gfx) {
+    gfx.clear();
     gfx.loadPixels();
-    const d = 1; // Use fixed pixel density of 1
-
-    // 4x4 Bayer matrix
-    let bayer = [
-      [1, 9, 3, 11],
-      [13, 5, 15, 7],
-      [4, 12, 2, 10],
-      [16, 8, 14, 6]
-    ];
-
-    for (let y = 0; y < gfx.height; y++) {
-      for (let x = 0; x < gfx.width; x++) {
-        let index = 4 * (x + y * gfx.width);
-        let r = gfx.pixels[index + 0];
-        let g = gfx.pixels[index + 1];
-        let b = gfx.pixels[index + 2];
-        let a = gfx.pixels[index + 3];
-
-        if (a < 1) continue; // Skip fully transparent pixels
-
-        let brightnessVal = (r + g + b) / 3.0;
-        let threshold = (bayer[x % 4][y % 4] / 17) * 255;
-
-        if (brightnessVal < threshold) {
-          // Push color toward a soft background
-          gfx.pixels[index + 0] = p.lerp(r, 245, 0.6);
-          gfx.pixels[index + 1] = p.lerp(g, 240, 0.6);
-          gfx.pixels[index + 2] = p.lerp(b, 235, 0.6);
-        }
-      }
+    for (let i = 0; i < gfx.pixels.length; i += 4) {
+      let noiseVal = p.random(50);
+      gfx.pixels[i] = noiseVal;
+      gfx.pixels[i + 1] = noiseVal;
+      gfx.pixels[i + 2] = noiseVal;
+      gfx.pixels[i + 3] = 50;
     }
     gfx.updatePixels();
-  }
-
-  function applyGlitch() {
-    let snapshot = p.get();
-    let offset = 6;
-
-    // Red
-    p.tint(255, 0, 0);
-    p.image(snapshot, p.random(-offset, offset), p.random(-offset, offset));
-
-    // Green
-    p.tint(0, 255, 0, 180);
-    p.image(snapshot, p.random(-offset, offset), p.random(-offset, offset));
-
-    // Blue
-    p.tint(0, 0, 255, 180);
-    p.image(snapshot, p.random(-offset, offset), p.random(-offset, offset));
-
-    p.tint(255);
-  }
-
-  function applyGrain(strength) {
-    p.loadPixels();
-    for (let i = 0; i < p.pixels.length; i += 4) {
-      let amt = p.random(-strength, strength);
-      p.pixels[i + 0] += amt; // R
-      p.pixels[i + 1] += amt; // G
-      p.pixels[i + 2] += amt; // B
-    }
-    p.updatePixels();
-  }
-
-  p.mousePressed = function() {
-    glitchActive = true;
-    glitchTimer = 0;
-  }
-
-  p.touchStarted = function() {
-    glitchActive = true;
-    glitchTimer = 0;
-    return false;
-  }
-
-  p.windowResized = () => {
-    const container = document.querySelector('.animationScreen');
-    if (container) {
-      const w = container.offsetWidth;
-      const h = container.offsetHeight;
-      p.resizeCanvas(w, h);
-      
-      // Resize and recreate graphics buffers
-      layerW = p.floor(w / 2);
-      layerH = p.floor(h / 2);
-      blobLayer = p.createGraphics(layerW, layerH);
-      blobLayer.pixelDensity(1);
-      
-      textLayer = p.createGraphics(w, h);
-      textLayer.pixelDensity(1);
-      textLayer.noSmooth();
-      
-      p.textSize(p.min(w, h) * 0.06);
-    }
   }
 };
