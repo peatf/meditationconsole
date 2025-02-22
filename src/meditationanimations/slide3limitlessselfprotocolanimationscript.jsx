@@ -14,19 +14,20 @@ const sketch = (p) => {
   let distortedBuffer;
   let startX = 0;
   let startY = 0;
+  let allowScroll = true;
 
   p.setup = () => {
-    const container = document.querySelector('.animationScreen');
+    const container = document.querySelector(".animationScreen");
     let w = container ? container.offsetWidth : 800;
     let h = container ? container.offsetHeight : 600;
     const canvas = p.createCanvas(w, h);
 
     // Center the canvas in the container
     const canvasElement = canvas.elt;
-    canvasElement.style.position = 'absolute';
-    canvasElement.style.left = '50%';
-    canvasElement.style.top = '50%';
-    canvasElement.style.transform = 'translate(-50%, -50%)';
+    canvasElement.style.position = "absolute";
+    canvasElement.style.left = "50%";
+    canvasElement.style.top = "50%";
+    canvasElement.style.transform = "translate(-50%, -50%)";
 
     dividerX = p.width / 2;
     objectSize = p.min(p.width, p.height) * 0.4;
@@ -93,15 +94,9 @@ const sketch = (p) => {
 
     for (let x = 0; x < 10; x++) {
       for (let y = 0; y < 10; y++) {
-        let c;
-
-        if (distort) {
-          let choice = p.floor(p.random(4));
-          c = [colorDistorted1, colorDistorted2, colorDistorted3, colorDistorted4][choice];
-        } else {
-          let choice = p.floor(p.random(2));
-          c = choice === 0 ? colorNormal1 : colorNormal2;
-        }
+        let c = distort
+          ? [colorDistorted1, colorDistorted2, colorDistorted3, colorDistorted4][p.floor(p.random(4))]
+          : [colorNormal1, colorNormal2][p.floor(p.random(2))];
 
         let dx = 0;
         let dy = 0;
@@ -116,9 +111,7 @@ const sketch = (p) => {
           dy = p.random(-pixelSize * distortionAmount, pixelSize * distortionAmount);
           distortedPixelSize = pixelSize * p.random(0.7, 1.3);
 
-          if (p.random(1) < 0.2 * distortionAmount) {
-            continue;
-          }
+          if (p.random(1) < 0.2 * distortionAmount) continue;
         }
 
         target.fill(c);
@@ -151,20 +144,15 @@ const sketch = (p) => {
 
     if (p.touches.length > 0 && p.touches[0].x > dividerX - 50 && p.touches[0].x < dividerX + 50) {
       dragging = true;
+      allowScroll = false;
+    } else {
+      allowScroll = true;
     }
     return true;
   };
 
   p.touchMoved = () => {
-    if (!dragging) {
-      let deltaY = startY - p.mouseY;
-      let deltaX = p.mouseX - startX;
-
-      if (Math.abs(deltaY) > Math.abs(deltaX)) {
-        return true;
-      }
-      return false;
-    }
+    if (allowScroll) return true; // Allow vertical scrolling when not dragging
 
     if (dragging && p.touches.length > 0) {
       dividerX = p.constrain(p.touches[0].x, 50, p.width - 50);
@@ -174,20 +162,20 @@ const sketch = (p) => {
 
   p.touchEnded = () => {
     dragging = false;
+    allowScroll = true;
     return false;
   };
 
   p.windowResized = () => {
-    const container = document.querySelector('.animationScreen');
+    const container = document.querySelector(".animationScreen");
     if (container) {
       p.resizeCanvas(container.offsetWidth, container.offsetHeight);
 
-      // Update canvas positioning on resize
       const canvasElement = p.canvas.elt;
-      canvasElement.style.position = 'absolute';
-      canvasElement.style.left = '50%';
-      canvasElement.style.top = '50%';
-      canvasElement.style.transform = 'translate(-50%, -50%)';
+      canvasElement.style.position = "absolute";
+      canvasElement.style.left = "50%";
+      canvasElement.style.top = "50%";
+      canvasElement.style.transform = "translate(-50%, -50%)";
 
       objectSize = p.min(p.width, p.height) * 0.4;
       dividerX = p.width / 2;
