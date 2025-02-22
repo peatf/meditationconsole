@@ -16,19 +16,16 @@ const sketch = (p) => {
     container = document.querySelector('.animationScreen');
     let w, h;
     if (container) {
-      // Use clientWidth/clientHeight to reflect the container's inner dimensions
       w = container.clientWidth;
       h = container.clientHeight;
     } else {
       w = window.innerWidth;
       h = window.innerHeight;
     }
-    // Create canvas and attach it to the container if available
     const canvas = p.createCanvas(w, h);
     if (container) {
       canvas.parent(container);
     }
-    
     p.pixelDensity(1);
     p.noStroke();
     noiseGraphics = p.createGraphics(w, h);
@@ -64,8 +61,6 @@ const sketch = (p) => {
       p.pixels[i + 2] += grain;
     }
     p.updatePixels();
-
-    // Apply a subtle blur
     p.filter(p.BLUR, 0.75);
   };
 
@@ -95,7 +90,10 @@ const sketch = (p) => {
       let darkBeige = p.color(100, 90, 70, this.lifespan);
 
       p.push();
-      p.translate(p.width / 2, p.height);
+      // Shift upward: 90% down from the top instead of at the very bottom
+      p.translate(p.width / 2, p.height * 0.9);
+      // Scale horizontally to reduce width
+      p.scale(0.85, 1);
       for (let i = 0; i < this.segments; i++) {
         let angle = p.map(i, 0, this.segments, 0, p.TWO_PI);
         let noiseX = this.noiseOffsetX + this.radius * 0.01 * p.cos(angle);
@@ -139,11 +137,12 @@ const sketch = (p) => {
   const drawBackgroundGradient = () => {
     let backgroundColor1 = p.color(255, 200, 200);
     let backgroundColor2 = p.color(255, 100, 100);
+    // Center gradient at 90% height instead of the very bottom
     for (let r = p.height; r > 0; r -= 2) {
       let inter = p.map(r, 0, p.height, 1, 0);
       let c = p.lerpColor(backgroundColor1, backgroundColor2, inter);
       p.fill(c);
-      p.ellipse(p.width / 2, p.height, r * 2, r * 2);
+      p.ellipse(p.width / 2, p.height * 0.9, r * 2, r * 2);
     }
   };
 
