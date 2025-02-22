@@ -41,8 +41,7 @@ const sketch = (p) => {
                 sin(uv.y * 2.5 + time) * 0.4 + 
                 sin((uv.x + uv.y) * 4.0 + time) * 0.3;
       
-      // Base greenish gradient replaced with a softer background
-      // but still mixing
+      // Base color gradient
       vec3 base = mix(vec3(0.16, 0.36, 0.20), vec3(0.96, 0.84, 0.65), n*0.5);
       
       // Pink accent with increased saturation
@@ -97,11 +96,19 @@ const sketch = (p) => {
     '#FF6666'  // soft red
   ];
 
+  // Helper for random2D in instance mode
+  // (since we don't have a global p5 we can do p5.Vector.random2D())
+  function random2DVector() {
+    const angle = p.random(p.TWO_PI);
+    return p.createVector(p.cos(angle), p.sin(angle));
+  }
+
   class EtherealFish {
     constructor(x, y, fishColor) {
       this.color = p.color(fishColor);
       this.position = p.createVector(x + p.random(-100, 100), y + p.random(-100, 100));
-      this.velocity = p5.Vector.random2D().mult(p.random(1, 2));
+      // Replace p5.Vector.random2D() -> p.constructor.Vector.random2D() or a helper
+      this.velocity = random2DVector().mult(p.random(1, 2));
       this.acceleration = p.createVector();
       this.maxSpeed = 2;
       this.maxForce = 0.05;
@@ -246,7 +253,8 @@ const sketch = (p) => {
         if (other !== this && d < 100) {
           alignment.add(other.velocity);
           cohesion.add(other.position);
-          let diff = p5.Vector.sub(this.position, other.position).div(d);
+          // replace p5.Vector.sub(...) => p.constructor.Vector.sub(...)
+          let diff = p.constructor.Vector.sub(this.position, other.position).div(d);
           separation.add(diff);
           total++;
         }
