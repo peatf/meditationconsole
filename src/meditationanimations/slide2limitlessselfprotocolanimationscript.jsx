@@ -11,7 +11,7 @@ const sketch = (p) => {
   let noiseGraphics;
   let isDragging = false;
   let lastY = 0;
-  let shouldUpdatePixels = true; // Controls pixel updates
+  let shouldUpdatePixels = true;
   let canvasElement, containerElement;
 
   p.setup = () => {
@@ -67,7 +67,6 @@ const sketch = (p) => {
     p.image(noiseGraphics, 0, 0);
     p.blendMode(p.BLEND);
 
-    // Optimize pixel processing
     if (shouldUpdatePixels) {
       applyGrainEffect();
       shouldUpdatePixels = false;
@@ -131,39 +130,30 @@ const sketch = (p) => {
     }
   }
 
-  const generateNoiseTexture = () => {
-    noiseGraphics.noStroke();
-    for (let x = 0; x < noiseGraphics.width; x++) {
-      for (let y = 0; y < noiseGraphics.height; y++) {
-        let noiseVal = p.noise(x * 0.07, y * 0.07);
-        let navyBlue = p.map(noiseVal, 0, 1, 150, 200);
-        noiseGraphics.fill(0, 0, navyBlue);
-        noiseGraphics.rect(x, y, 1, 1);
-      }
+  const handleSwipe = (y) => {
+    if (isDragging) {
+      const deltaY = lastY - y;
+      energyLevel = p.constrain(energyLevel + deltaY * 0.002, 0, 1);
+      lastY = y;
     }
   };
 
-  const drawBackgroundGradient = () => {
-    let backgroundColor1 = p.color(255, 200, 200);
-    let backgroundColor2 = p.color(255, 100, 100);
-    for (let r = p.height; r > 0; r -= 2) {
-      let inter = p.map(r, 0, p.height, 1, 0);
-      p.fill(p.lerpColor(backgroundColor1, backgroundColor2, inter));
-      p.ellipse(p.width / 2, p.height, r * 2, r * 2);
-    }
-  };
+  p.mousePressed = () => { isDragging = true; lastY = p.mouseY; return false; };
+  p.mouseDragged = () => { handleSwipe(p.mouseY); return false; };
+  p.mouseReleased = () => { isDragging = false; return true; };
 
-  const applyGrainEffect = () => {
-    p.loadPixels();
-    for (let i = 0; i < p.pixels.length; i += 4) {
-      let grain = p.random(-10, 10);
-      p.pixels[i] += grain;
-      p.pixels[i + 1] += grain;
-      p.pixels[i + 2] += grain;
-    }
-    p.updatePixels();
-    p.filter(p.BLUR, 0.75);
+  p.touchStarted = (event) => {
+    isDragging = true;
+    lastY = event.touches[0].clientY;
+    event.preventDefault();
+    return false;
   };
+  p.touchMoved = (event) => {
+    handleSwipe(event.touches[0].clientY);
+    event.preventDefault();
+    return false;
+  };
+  p.touchEnded = () => { isDragging = false; return true; };
 
   p.windowResized = () => {
     const w = containerElement?.offsetWidth || window.innerWidth;
