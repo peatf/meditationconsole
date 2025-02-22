@@ -17,6 +17,8 @@ const sketch = (p) => {
   let lastY = 0;
 
   p.setup = () => {
+      const ctx = canvasElement.getContext("2d", { willReadFrequently: true });
+
     containerElement = document.querySelector(".animationScreen");
     const w = containerElement?.offsetWidth || window.innerWidth;
     const h = containerElement?.offsetHeight || window.innerHeight;
