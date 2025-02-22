@@ -99,14 +99,6 @@
   }
 }
 
-.directionsText {
-  font-family: inherit; /* Ensures it matches the font used globally */
-  font-size: 1.125rem; /* Match the button font size */
-  color: #626358; /* Match the button color */
-  font-weight: 500; /* Match the weight used in buttons */
-  text-align: center;
-  margin: 2rem 0;
-}
 
 /* Rainbow loader */
 .loader {
@@ -284,6 +276,7 @@
 .slideText {
   text-align: center;
   margin: 2rem 0;
+  font-family: sans serif;
   font-size: 1.125rem;
   color: #626358;
   font-weight: 500;
