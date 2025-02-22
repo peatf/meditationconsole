@@ -139,14 +139,13 @@ const sketch = (p) => {
     const canvas = p.createCanvas(w, h, p.WEBGL);
     const canvasElement = canvas.elt;
     canvasElement.style.position = "absolute";
-    canvasElement.style.left = "50%";
-    canvasElement.style.top = "50%";
-    canvasElement.style.transform = "translate(-50%, -50%)";
-    // **Key addition:** lower the z-index so that nav buttons (with higher z-index) remain clickable
-    canvasElement.style.zIndex = "0";
+  canvasElement.style.left = "50%";
+  canvasElement.style.top = "50%";
+  canvasElement.style.transform = "translate(-50%, -50%)";
+  canvasElement.style.zIndex = "0";
     // Ensure touch events register correctly on mobile:
-    canvasElement.style.touchAction = "none";
-    canvasElement.style.pointerEvents = "none";
+    canvasElement.style.touchAction = "manipulation";
+
 
     try {
       shaderProgram = p.createShader(vert, frag);
