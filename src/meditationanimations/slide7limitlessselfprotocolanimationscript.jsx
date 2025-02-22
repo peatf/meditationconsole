@@ -34,6 +34,7 @@ const sketch = (p) => {
     p.createCanvas(w, h);
     p.pixelDensity(1);
 
+    // Set up offscreen buffers
     layerW = p.floor(w / 2);
     layerH = p.floor(h / 2);
 
@@ -50,7 +51,7 @@ const sketch = (p) => {
     noiseLayer = p.createGraphics(w, h);
     noiseLayer.pixelDensity(1);
 
-    // EXTRACTED COLORS (adjust as needed)
+    // Define a soft pastel palette
     colorPalette = [
       p.color(248, 237, 181), // Pale Yellow (Background)
       p.color(237, 156, 120), // Salmon/Orange (for blobs)
@@ -58,10 +59,9 @@ const sketch = (p) => {
       p.color(213, 205, 163), // Light Yellow
       p.color(236, 203, 202), // Pink
     ];
+    questionColor = colorPalette[2]; // Use dark brown for text
 
-    questionColor = colorPalette[2]; // Dark brown for text
-
-    // Initialize blobs (fewer, larger)
+    // Initialize blobs (larger, fewer)
     for (let i = 0; i < numBlobs; i++) {
       let baseR = p.random(150, 250);
       let blobColor = p.random([colorPalette[1], colorPalette[2]]);
@@ -107,7 +107,7 @@ const sketch = (p) => {
     applySubtleNoise(noiseLayer);
     p.image(noiseLayer, 0, 0);
 
-    // 6) Draw text on top so it remains visible
+    // 6) Draw text on top
     drawArtText();
   };
 
@@ -127,7 +127,7 @@ const sketch = (p) => {
     for (let i = 0; i < flowField.length; i++) {
       let v = flowField[i];
       let angle = p.noise(v.x * 0.005, v.y * 0.005, flowFieldZOffset) * p.TWO_PI * 2;
-      // Use p.createVector with cosine and sine instead of p5.Vector.fromAngle
+      // Use p.createVector with cosine and sine:
       let vec = p.createVector(p.cos(angle), p.sin(angle));
       vec.setMag(particleSpeed);
 
@@ -162,7 +162,6 @@ const sketch = (p) => {
       gfx.fill(b.color);
       gfx.ellipse(b.x, b.y, b.r * 2, b.r * 2);
 
-      // Update positions
       b.x += b.dx;
       b.y += b.dy;
       if (b.x < -b.r || b.x > gfx.width + b.r) b.dx *= -1;
@@ -183,28 +182,30 @@ const sketch = (p) => {
     }
   }
 
-  // TEXT FUNCTION: Draws centered, wrapping text on top
+  // TEXT: Vertically center and allow wrapping on mobile
   function drawArtText() {
     textLayer.clear();
     textLayer.textWrap(p.WORD);
-    textLayer.textAlign(p.CENTER, p.CENTER);
+    // Use LEFT, TOP for text so we can manually position it.
+    textLayer.textAlign(p.LEFT, p.TOP);
     textLayer.textSize(p.min(p.width, p.height) * 0.04);
+    textLayer.textFont("Georgia");
 
-    // Define a bounding box for text: 80% width and 50% height, centered.
+    // Compute a bounding box: 80% width and 50% height, centered
     let boxW = p.width * 0.8;
     let boxH = p.height * 0.5;
-    let centerX = p.width / 2;
-    let centerY = p.height / 2;
-
-    // Draw shadow/glow (slightly offset)
+    let boxX = (p.width - boxW) / 2;
+    let boxY = (p.height - boxH) / 2;
+    
+    // Optionally, draw a translucent shadow (for glow effect)
     textLayer.fill(p.red(questionColor), p.green(questionColor), p.blue(questionColor), 50);
-    textLayer.text(question, centerX + 2, centerY + 2, boxW, boxH);
+    textLayer.text(question, boxX + 2, boxY + 2, boxW, boxH);
     textLayer.filter(p.BLUR, 1);
     
-    // Draw main text on top (fully opaque)
+    // Draw main text
     textLayer.fill(questionColor);
-    textLayer.text(question, centerX, centerY, boxW, boxH);
-
+    textLayer.text(question, boxX, boxY, boxW, boxH);
+    
     p.image(textLayer, 0, 0);
   }
 
@@ -239,7 +240,6 @@ const sketch = (p) => {
         let g = gfx.pixels[idx + 1];
         let b = gfx.pixels[idx + 2];
         let a = gfx.pixels[idx + 3];
-
         for (let py = 0; py < blockSize; py++) {
           for (let px = 0; px < blockSize; px++) {
             let x2 = x + px;
