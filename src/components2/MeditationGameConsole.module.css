@@ -221,6 +221,8 @@
   justify-content: center;
   align-items: center;
   z-index: 1;
+  position: relative;  /* If not already present */
+  isolation: isolate; 
 }
 
 /* Add inset shadow and screen effect */
@@ -272,6 +274,9 @@
   display: block;
   max-width: 100%;
   max-height: 100%;
+  position: relative;
+  z-index: 1 !important; /* Force behind buttons */
+  pointer-events: none;
 }
 
 /* ----- Text Styles ----- */
@@ -291,7 +296,8 @@
   gap: 1.5rem;
   margin: 2rem 0;
   position: relative;
-  z-index: 2;
+  z-index: 3;
+  transform: translate3d(0,0,0);
 }
 
 .button {
