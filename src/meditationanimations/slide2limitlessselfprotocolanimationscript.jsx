@@ -9,6 +9,7 @@ const sketch = (p) => {
   let energyLevel = 0;
   let waves = [];
   let startY = 0;
+  let startX = 0;
   let noiseGraphics;
 
   p.setup = () => {
@@ -163,15 +164,26 @@ const sketch = (p) => {
 
   // Input handling
   p.touchStarted = () => {
+    startX = p.mouseX;
     startY = p.mouseY;
-    return false;
+    // Let the event propagate initially
+    return true;
   };
 
   p.touchMoved = () => {
     let deltaY = startY - p.mouseY;
+    let deltaX = p.mouseX - startX;
+
     energyLevel += deltaY * 0.002;
     energyLevel = p.constrain(energyLevel, 0, 1);
     startY = p.mouseY;
+    startX = p.mouseX;
+
+    // If the vertical movement is larger than horizontal, assume scrolling (allow default behavior)
+    if (Math.abs(deltaY) > Math.abs(deltaX)) {
+      return true;
+    }
+    // Otherwise, prevent default behavior for horizontal interactions
     return false;
   };
 
@@ -207,3 +219,4 @@ const sketch = (p) => {
     generateNoiseTexture();
   };
 };
+
