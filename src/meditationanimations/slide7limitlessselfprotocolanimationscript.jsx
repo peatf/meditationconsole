@@ -189,7 +189,7 @@ function drawArtText() {
   textLayer.textWrap(p.WORD);
   textLayer.textAlign(p.CENTER, p.CENTER);
   textLayer.textSize(p.min(p.width, p.height) * 0.04);
-  textLayer.textFont("Georgia");
+  textLayer.textFont("sans-serif");
 
   // Calculate bounding box: 80% of width, 50% of height, centered.
   let boxW = p.width * 0.8;
