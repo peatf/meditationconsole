@@ -10,25 +10,25 @@ const sketch = (p) => {
   let waves = [];
   let startY = 0;
   let noiseGraphics;
+  let container;
 
   p.setup = () => {
-    const container = document.querySelector('.animationScreen');
+    container = document.querySelector('.animationScreen');
     let w, h;
     if (container) {
-      w = container.offsetWidth;
-      h = container.offsetHeight;
+      // Use clientWidth/clientHeight to reflect the container's inner dimensions
+      w = container.clientWidth;
+      h = container.clientHeight;
     } else {
       w = window.innerWidth;
       h = window.innerHeight;
     }
+    // Create canvas and attach it to the container if available
     const canvas = p.createCanvas(w, h);
-    // Center the canvas
-    const canvasElement = canvas.elt;
-    canvasElement.style.position = 'absolute';
-    canvasElement.style.left = '50%';
-    canvasElement.style.top = '50%';
-    canvasElement.style.transform = 'translate(-50%, -50%)';
-
+    if (container) {
+      canvas.parent(container);
+    }
+    
     p.pixelDensity(1);
     p.noStroke();
     noiseGraphics = p.createGraphics(w, h);
@@ -36,15 +36,12 @@ const sketch = (p) => {
   };
 
   p.draw = () => {
-    // Draw REDDISH Beige Radial Gradient Background
     drawBackgroundGradient();
 
-    // Create new waves based on energyLevel
     if (p.frameCount % (60 - p.map(energyLevel, 0, 1, 10, 50)) === 0) {
       waves.push(new Wave());
     }
 
-    // Update and display waves
     for (let i = waves.length - 1; i >= 0; i--) {
       waves[i].update();
       waves[i].display();
@@ -53,12 +50,12 @@ const sketch = (p) => {
       }
     }
 
-    // Apply noise texture overlay using SCREEN blend mode
+    // Overlay the noise texture using SCREEN blend mode
     p.blendMode(p.SCREEN);
     p.image(noiseGraphics, 0, 0);
     p.blendMode(p.BLEND);
 
-    // Grain effect (post-processing)
+    // Grain effect
     p.loadPixels();
     for (let i = 0; i < p.pixels.length; i += 4) {
       let grain = p.random(-10, 10);
@@ -94,7 +91,6 @@ const sketch = (p) => {
     }
 
     display() {
-      // Bright orange wave with dark beige fade
       let baseColor = p.color(255, 150, 0, this.lifespan);
       let darkBeige = p.color(100, 90, 70, this.lifespan);
 
@@ -117,7 +113,6 @@ const sketch = (p) => {
         let b = p.constrain(p.blue(c) + colorOffset, 0, 255);
         p.fill(r, g, b, this.lifespan);
 
-        // Add glitch effect based on energyLevel
         if (p.random(1) < this.glitchProbability * energyLevel) {
           x += p.random(-10, 10);
           y += p.random(-10, 10);
@@ -129,7 +124,6 @@ const sketch = (p) => {
     }
   }
 
-  // Generate noise texture with a subtle navy blue tint
   const generateNoiseTexture = () => {
     noiseGraphics.noStroke();
     for (let x = 0; x < noiseGraphics.width; x++) {
@@ -142,7 +136,6 @@ const sketch = (p) => {
     }
   };
 
-  // Draw a reddish radial gradient background
   const drawBackgroundGradient = () => {
     let backgroundColor1 = p.color(255, 200, 200);
     let backgroundColor2 = p.color(255, 100, 100);
@@ -180,23 +173,16 @@ const sketch = (p) => {
   };
 
   p.windowResized = () => {
-    const container = document.querySelector('.animationScreen');
     let w, h;
     if (container) {
-      w = container.offsetWidth;
-      h = container.offsetHeight;
+      w = container.clientWidth;
+      h = container.clientHeight;
     } else {
       w = window.innerWidth;
       h = window.innerHeight;
     }
     p.resizeCanvas(w, h);
-    const canvasElement = p.canvas.elt;
-    canvasElement.style.position = 'absolute';
-    canvasElement.style.left = '50%';
-    canvasElement.style.top = '50%';
-    canvasElement.style.transform = 'translate(-50%, -50%)';
-
-    noiseGraphics = p.createGraphics(p.width, p.height);
+    noiseGraphics = p.createGraphics(w, h);
     generateNoiseTexture();
   };
 };
