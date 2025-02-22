@@ -145,6 +145,7 @@ const sketch = (p) => {
       startY = p.mouseY;
       touchBlocked = true;
       event.preventDefault();
+      event.stopPropagation();
     }
   };
 
