@@ -12,14 +12,15 @@ const sketch = (p) => {
   let normalBGColor;
   let alteredBGColor;
   let distortedBuffer;
+  let startX = 0;
+  let startY = 0;
 
   p.setup = () => {
-    // Create canvas with container dimensions
     const container = document.querySelector('.animationScreen');
     let w = container ? container.offsetWidth : 800;
     let h = container ? container.offsetHeight : 600;
     const canvas = p.createCanvas(w, h);
-    
+
     // Center the canvas in the container
     const canvasElement = canvas.elt;
     canvasElement.style.position = 'absolute';
@@ -33,28 +34,22 @@ const sketch = (p) => {
     p.noStroke();
     normalBGColor = p.color(240); // Light gray
     alteredBGColor = p.color(245, 231, 209); // Beige
-    distortedBuffer = p.createGraphics(p.width, p.height); // Create the buffer
-  }
+    distortedBuffer = p.createGraphics(p.width, p.height);
+  };
 
   p.draw = () => {
     p.background(normalBGColor);
 
-    // --- Draw the "Normal" Object ---
     drawPixelatedObject(false, 0);
+    distortedBuffer.clear();
+    drawPixelatedObject(true, dividerX, distortedBuffer);
 
-    // --- Prepare the Distorted Object (on the buffer) ---
-    distortedBuffer.clear(); // Clear the buffer
-    drawPixelatedObject(true, dividerX, distortedBuffer); // Draw distorted object ONTO the buffer
+    distortedBuffer.filter(p.BLUR, 2);
 
-    // --- Apply Blur to the ENTIRE Distorted Buffer ---
-    distortedBuffer.filter(p.BLUR, 2); // Apply blur to the whole buffer ONCE
-
-    // --- Apply Clipping and Draw Distorted Object ---
     p.push();
     let clipWidth = 150;
     let clipX = dividerX - clipWidth / 2;
 
-    // Draw altered background within clip
     p.fill(alteredBGColor);
     p.rect(clipX, 0, clipWidth, p.height);
 
@@ -62,11 +57,9 @@ const sketch = (p) => {
     clipPath.rect(clipX, 0, clipWidth, p.height);
     p.drawingContext.clip(clipPath);
 
-    p.image(distortedBuffer, 0, 0); // Draw the blurred, distorted buffer
+    p.image(distortedBuffer, 0, 0);
+    p.pop();
 
-    p.pop(); // Restore drawing state
-
-    // --- Grain Effect (Post-Processing) ---
     p.loadPixels();
     for (let i = 0; i < p.pixels.length; i += 4) {
       let grain = p.random(-10, 10);
@@ -76,15 +69,14 @@ const sketch = (p) => {
     }
     p.updatePixels();
 
-    // --- Draw the Divider ---
     p.stroke(50);
     p.strokeWeight(4);
     p.line(dividerX, 0, dividerX, p.height);
     p.noStroke();
-  }
+  };
 
   function drawPixelatedObject(distort, clipX, buffer) {
-    let target = buffer || p; // Draw to buffer if provided, otherwise to main canvas
+    let target = buffer || p;
     let pixelSize = objectSize / 10;
     let xOffset = (p.width - objectSize) / 2;
     let yOffset = (p.height - objectSize) / 2;
@@ -92,13 +84,12 @@ const sketch = (p) => {
     target.push();
     target.translate(xOffset, yOffset);
 
-    // --- Colors ---
-    let colorNormal1 = p.color(100, 200, 100); // Original Green
-    let colorNormal2 = p.color(180, 255, 180); // Original Light Green
-    let colorDistorted1 = p.color(235, 153, 144); // Reddish
-    let colorDistorted2 = p.color(246, 198, 98);  // Yellowish
-    let colorDistorted3 = p.color(148, 107, 176);  // Purple-ish
-    let colorDistorted4 = p.color(177, 214, 237); // Light blue
+    let colorNormal1 = p.color(100, 200, 100);
+    let colorNormal2 = p.color(180, 255, 180);
+    let colorDistorted1 = p.color(235, 153, 144);
+    let colorDistorted2 = p.color(246, 198, 98);
+    let colorDistorted3 = p.color(148, 107, 176);
+    let colorDistorted4 = p.color(177, 214, 237);
 
     for (let x = 0; x < 10; x++) {
       for (let y = 0; y < 10; y++) {
@@ -106,16 +97,12 @@ const sketch = (p) => {
 
         if (distort) {
           let choice = p.floor(p.random(4));
-          if (choice === 0) c = colorDistorted1;
-          else if (choice === 1) c = colorDistorted2;
-          else if (choice === 2) c = colorDistorted3;
-          else c = colorDistorted4;
+          c = [colorDistorted1, colorDistorted2, colorDistorted3, colorDistorted4][choice];
         } else {
           let choice = p.floor(p.random(2));
-          c = (choice === 0) ? colorNormal1 : colorNormal2;
+          c = choice === 0 ? colorNormal1 : colorNormal2;
         }
 
-        // --- Distortion (if distort is true) ---
         let dx = 0;
         let dy = 0;
         let distortedPixelSize = pixelSize;
@@ -130,7 +117,7 @@ const sketch = (p) => {
           distortedPixelSize = pixelSize * p.random(0.7, 1.3);
 
           if (p.random(1) < 0.2 * distortionAmount) {
-            continue; // Skip drawing
+            continue;
           }
         }
 
@@ -146,52 +133,65 @@ const sketch = (p) => {
     if (p.mouseX > dividerX - 20 && p.mouseX < dividerX + 20) {
       dragging = true;
     }
-  }
+  };
 
   p.mouseDragged = () => {
     if (dragging) {
       dividerX = p.constrain(p.mouseX, 50, p.width - 50);
     }
-  }
+  };
 
   p.mouseReleased = () => {
     dragging = false;
-  }
+  };
 
   p.touchStarted = () => {
+    startX = p.mouseX;
+    startY = p.mouseY;
+
     if (p.touches.length > 0 && p.touches[0].x > dividerX - 50 && p.touches[0].x < dividerX + 50) {
       dragging = true;
     }
-    return false;
-  }
+    return true;
+  };
 
   p.touchMoved = () => {
+    if (!dragging) {
+      let deltaY = startY - p.mouseY;
+      let deltaX = p.mouseX - startX;
+
+      if (Math.abs(deltaY) > Math.abs(deltaX)) {
+        return true;
+      }
+      return false;
+    }
+
     if (dragging && p.touches.length > 0) {
       dividerX = p.constrain(p.touches[0].x, 50, p.width - 50);
     }
     return false;
-  }
+  };
 
   p.touchEnded = () => {
     dragging = false;
     return false;
-  }
+  };
 
   p.windowResized = () => {
     const container = document.querySelector('.animationScreen');
     if (container) {
       p.resizeCanvas(container.offsetWidth, container.offsetHeight);
-      
+
       // Update canvas positioning on resize
       const canvasElement = p.canvas.elt;
       canvasElement.style.position = 'absolute';
       canvasElement.style.left = '50%';
       canvasElement.style.top = '50%';
       canvasElement.style.transform = 'translate(-50%, -50%)';
-      
+
       objectSize = p.min(p.width, p.height) * 0.4;
       dividerX = p.width / 2;
       distortedBuffer = p.createGraphics(p.width, p.height);
     }
-  }
+  };
 };
