@@ -128,7 +128,7 @@ export default function MeditationGameConsole() {
         )}
 
         {/* Slide Text */}
-        <p className={styles.slideText}>{slide.text}</p>
+        <p className={styles.directionsText}>{slide.text}</p>
 
         {/* Buttons */}
         {slide.type === "buttons" && (
