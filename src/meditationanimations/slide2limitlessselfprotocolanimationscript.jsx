@@ -10,7 +10,7 @@ const sketch = (p) => {
   let waves = [];
   let startY = 0;
   let noiseGraphics;
-  let touchBlocked = false; 
+  let touchBlocked = false; // Flag to track if scrolling should be blocked
 
   p.setup = () => {
     const container = document.querySelector(".animationScreen");
@@ -30,6 +30,8 @@ const sketch = (p) => {
     canvasElement.style.left = "50%";
     canvasElement.style.top = "50%";
     canvasElement.style.transform = "translate(-50%, -50%)";
+    // Prevent browser touch scrolling on the canvas
+    canvasElement.style.touchAction = "none";
 
     p.pixelDensity(1);
     p.noStroke();
@@ -152,12 +154,12 @@ const sketch = (p) => {
   };
 
   p.touchStarted = (event) => {
-    // Only block scrolling if touch happens inside the animation screen
+    // Block scrolling if touch is inside the animation canvas
     const container = document.querySelector(".animationScreen");
     if (container && container.contains(event.target)) {
       startY = p.mouseY;
       touchBlocked = true;
-      event.preventDefault(); // Block scrolling
+      event.preventDefault();
     }
   };
 
@@ -167,12 +169,12 @@ const sketch = (p) => {
       energyLevel += deltaY * 0.002;
       energyLevel = p.constrain(energyLevel, 0, 1);
       startY = p.mouseY;
-      event.preventDefault(); // Keep blocking scrolling inside animation screen
+      event.preventDefault();
     }
   };
 
   p.touchEnded = (event) => {
-    touchBlocked = false; // Allow scrolling again
+    touchBlocked = false;
   };
 
   p.windowResized = () => {
