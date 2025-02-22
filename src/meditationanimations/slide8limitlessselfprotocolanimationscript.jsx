@@ -86,12 +86,12 @@ const sketch = (p) => {
     }
 
     vec3 colorPalette(float t, vec2 uv, float time) {
-      vec3 mainColor  = hexToRGB(vec3(195.0, 189.0, 189.0));  // C3BDBD
-      vec3 deepBlue   = hexToRGB(vec3(20.0,  28.0, 105.0));   // 141C69
-      vec3 midTone    = hexToRGB(vec3(154.0, 149.0, 167.0));  // 9A95A7
-      vec3 shadow     = hexToRGB(vec3(107.0, 104.0, 137.0));  // 6B6889
-      vec3 mintSplash = hexToRGB(vec3(227.0, 255.0, 200.0));  // E3FFC8
-      vec3 highlight  = hexToRGB(vec3(235.0, 235.0, 245.0));  // EBEBF5
+      vec3 mainColor  = hexToRGB(vec3(195.0, 189.0, 189.0));
+      vec3 deepBlue   = hexToRGB(vec3(20.0,  28.0, 105.0));
+      vec3 midTone    = hexToRGB(vec3(154.0, 149.0, 167.0));
+      vec3 shadow     = hexToRGB(vec3(107.0, 104.0, 137.0));
+      vec3 mintSplash = hexToRGB(vec3(227.0, 255.0, 200.0));
+      vec3 highlight  = hexToRGB(vec3(235.0, 235.0, 245.0));
 
       float pi2 = 6.28318;
       float cloudPattern = sin(uv.x * 3.0 + time) * 0.2;
@@ -142,6 +142,8 @@ const sketch = (p) => {
     canvasElement.style.left = "50%";
     canvasElement.style.top = "50%";
     canvasElement.style.transform = "translate(-50%, -50%)";
+    // **Key addition:** lower the z-index so that nav buttons (with higher z-index) remain clickable
+    canvasElement.style.zIndex = "0";
     // Ensure touch events register correctly on mobile:
     canvasElement.style.touchAction = "none";
 
