@@ -183,31 +183,38 @@ const sketch = (p) => {
   }
 
   // TEXT: Vertically center and allow wrapping on mobile
-  function drawArtText() {
-    textLayer.clear();
-    textLayer.textWrap(p.WORD);
-    // Use LEFT, TOP for text so we can manually position it.
-    textLayer.textAlign(p.LEFT, p.TOP);
-    textLayer.textSize(p.min(p.width, p.height) * 0.04);
-    textLayer.textFont("Georgia");
+function drawArtText() {
+  // Clear the offscreen text layer
+  textLayer.clear();
+  textLayer.textWrap(p.WORD);
+  textLayer.textAlign(p.CENTER, p.CENTER);
+  textLayer.textSize(p.min(p.width, p.height) * 0.04);
+  textLayer.textFont("Georgia");
 
-    // Compute a bounding box: 80% width and 50% height, centered
-    let boxW = p.width * 0.8;
-    let boxH = p.height * 0.5;
-    let boxX = (p.width - boxW) / 2;
-    let boxY = (p.height - boxH) / 2;
-    
-    // Optionally, draw a translucent shadow (for glow effect)
-    textLayer.fill(p.red(questionColor), p.green(questionColor), p.blue(questionColor), 50);
-    textLayer.text(question, boxX + 2, boxY + 2, boxW, boxH);
-    textLayer.filter(p.BLUR, 1);
-    
-    // Draw main text
-    textLayer.fill(questionColor);
-    textLayer.text(question, boxX, boxY, boxW, boxH);
-    
-    p.image(textLayer, 0, 0);
-  }
+  // Calculate a bounding box centered on the canvas:
+  let boxW = p.width * 0.8;
+  let boxH = p.height * 0.5;
+  let centerX = p.width / 2;
+  let centerY = p.height / 2;
+
+  // Draw the drop shadow (subtle glow)
+  textLayer.push();
+  // Set a low opacity fill for the shadow; adjust the alpha as needed
+  textLayer.fill(p.red(questionColor), p.green(questionColor), p.blue(questionColor), 50);
+  // Draw the text slightly offset (by 2 pixels in both directions)
+  textLayer.text(question, centerX + 2, centerY + 2, boxW, boxH);
+  textLayer.pop();
+  // Apply a slight blur to the shadow
+  textLayer.filter(p.BLUR, 2);
+
+  // Draw the main text on top with full opacity
+  textLayer.fill(questionColor);
+  textLayer.text(question, centerX, centerY, boxW, boxH);
+
+  // Render the text layer onto the main canvas
+  p.image(textLayer, 0, 0);
+}
+
 
   // NOISE OVERLAY
   function applySubtleNoise(gfx) {
