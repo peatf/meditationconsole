@@ -14,11 +14,47 @@ const sketch = (p) => {
   let shouldUpdatePixels = true;
   let canvasElement, containerElement;
 
+  // Define helper functions as declarations so they are hoisted
+
+  function generateNoiseTexture() {
+    noiseGraphics.noStroke();
+    for (let x = 0; x < noiseGraphics.width; x++) {
+      for (let y = 0; y < noiseGraphics.height; y++) {
+        let noiseVal = p.noise(x * 0.07, y * 0.07);
+        let navyBlue = p.map(noiseVal, 0, 1, 150, 200);
+        noiseGraphics.fill(0, 0, navyBlue);
+        noiseGraphics.rect(x, y, 1, 1);
+      }
+    }
+  }
+
+  function drawBackgroundGradient() {
+    let backgroundColor1 = p.color(255, 200, 200);
+    let backgroundColor2 = p.color(255, 100, 100);
+    for (let r = p.height; r > 0; r -= 2) {
+      let inter = p.map(r, 0, p.height, 1, 0);
+      p.fill(p.lerpColor(backgroundColor1, backgroundColor2, inter));
+      p.ellipse(p.width / 2, p.height, r * 2, r * 2);
+    }
+  }
+
+  function applyGrainEffect() {
+    p.loadPixels();
+    for (let i = 0; i < p.pixels.length; i += 4) {
+      let grain = p.random(-10, 10);
+      p.pixels[i] += grain;
+      p.pixels[i + 1] += grain;
+      p.pixels[i + 2] += grain;
+    }
+    p.updatePixels();
+    p.filter(p.BLUR, 0.75);
+  }
+
   p.setup = () => {
     containerElement = document.querySelector(".animationScreen");
     const w = containerElement?.offsetWidth || window.innerWidth;
     const h = containerElement?.offsetHeight || window.innerHeight;
-    
+
     const canvas = p.createCanvas(w, h);
     canvasElement = canvas.elt;
 
@@ -60,7 +96,6 @@ const sketch = (p) => {
       waves[i].display();
       if (waves[i].isFinished()) waves.splice(i, 1);
     }
-
     p.pop();
 
     p.blendMode(p.SCREEN);
@@ -130,6 +165,7 @@ const sketch = (p) => {
     }
   }
 
+  // Unified swipe handler for both mouse and touch events.
   const handleSwipe = (y) => {
     if (isDragging) {
       const deltaY = lastY - y;
@@ -138,10 +174,22 @@ const sketch = (p) => {
     }
   };
 
-  p.mousePressed = () => { isDragging = true; lastY = p.mouseY; return false; };
-  p.mouseDragged = () => { handleSwipe(p.mouseY); return false; };
-  p.mouseReleased = () => { isDragging = false; return true; };
+  // Mouse event handlers
+  p.mousePressed = () => {
+    isDragging = true;
+    lastY = p.mouseY;
+    return false;
+  };
+  p.mouseDragged = () => {
+    handleSwipe(p.mouseY);
+    return false;
+  };
+  p.mouseReleased = () => {
+    isDragging = false;
+    return true;
+  };
 
+  // Touch event handlers
   p.touchStarted = (event) => {
     isDragging = true;
     lastY = event.touches[0].clientY;
@@ -153,12 +201,16 @@ const sketch = (p) => {
     event.preventDefault();
     return false;
   };
-  p.touchEnded = () => { isDragging = false; return true; };
+  p.touchEnded = () => {
+    isDragging = false;
+    return true;
+  };
 
+  // Responsive resizing
   p.windowResized = () => {
-    const w = containerElement?.offsetWidth || window.innerWidth;
-    const h = containerElement?.offsetHeight || window.innerHeight;
-    p.resizeCanvas(w, h);
+    const newWidth = containerElement?.offsetWidth || window.innerWidth;
+    const newHeight = containerElement?.offsetHeight || window.innerHeight;
+    p.resizeCanvas(newWidth, newHeight);
     noiseGraphics = p.createGraphics(p.width, p.height);
     generateNoiseTexture();
   };
