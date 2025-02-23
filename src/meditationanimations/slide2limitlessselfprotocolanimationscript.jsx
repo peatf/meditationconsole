@@ -114,7 +114,7 @@ const sketch = (p) => {
     constructor() {
       this.radius = 0;
       this.speed = p.map(energyLevel, 0, 1, 1, 5);
-      this.segments = 60; // Reduced from 120
+      this.segments = 60;
       this.glitchProbability = 0.01;
       this.lifespan = 255;
       this.noiseOffsetX = p.random(1000);
@@ -164,29 +164,6 @@ const sketch = (p) => {
       p.pop();
     }
   }
-
-  const generateNoiseTexture = () => {
-    noiseGraphics.noStroke();
-    for (let x = 0; x < noiseGraphics.width; x++) {
-      for (let y = 0; y < noiseGraphics.height; y++) {
-        let noiseVal = p.noise(x * 0.07, y * 0.07);
-        let navyBlue = p.map(noiseVal, 0, 1, 150, 200);
-        noiseGraphics.fill(0, 0, navyBlue);
-        noiseGraphics.rect(x, y, 1, 1);
-      }
-    }
-  };
-
-  const drawBackgroundGradient = () => {
-    let backgroundColor1 = p.color(255, 200, 200);
-    let backgroundColor2 = p.color(255, 100, 100);
-    for (let r = p.height; r > 0; r -= 2) {
-      let inter = p.map(r, 0, p.height, 1, 0);
-      let c = p.lerpColor(backgroundColor1, backgroundColor2, inter);
-      p.fill(c);
-      p.ellipse(p.width / 2, p.height, r * 2, r * 2);
-    }
-  };
 
   // Unified input handling
   const handleStart = (y) => {
@@ -266,6 +243,6 @@ const sketch = (p) => {
     const h = containerElement?.offsetHeight || window.innerHeight;
     p.resizeCanvas(w, h);
     noiseGraphics = p.createGraphics(p.width, p.height);
-    generateNoiseTexture();
+    generateNoiseTexture(w, h);
   };
 };
