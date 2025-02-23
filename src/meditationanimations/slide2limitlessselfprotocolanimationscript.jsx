@@ -8,13 +8,14 @@ export default function Slide2Animation() {
 const sketch = (p) => {
   let energyLevel = 0;
   let waves = [];
+  let startY = 0;
   let noiseGraphics;
+  let touchBlocked = false;
   let canvasElement;
   let containerElement;
   let isDragging = false;
   let lastY = 0;
   let bgBuffer;
-  let grainTexture;
 
   p.setup = () => {
     containerElement = document.querySelector(".animationScreen");
@@ -23,7 +24,7 @@ const sketch = (p) => {
     const canvas = p.createCanvas(w, h);
     
     canvasElement = canvas.elt;
-    const ctx = canvasElement.getContext('2d', { willReadFrequently: true });
+    canvasElement.getContext("2d", { willReadFrequently: true });
     
     canvasElement.style.position = "absolute";
     canvasElement.style.left = "50%";
@@ -35,49 +36,34 @@ const sketch = (p) => {
     p.pixelDensity(1);
     p.noStroke();
     
-    // Precompute background gradient
+    // Precompute background
     bgBuffer = p.createGraphics(w, h);
     drawBackgroundGradient(w, h);
     
-    // Generate optimized noise texture
+    // Optimized noise texture
+    noiseGraphics = p.createGraphics(w, h);
     generateNoiseTexture(w, h);
-    
-    // Create static grain texture
-    createGrainTexture(w, h);
   };
 
   const drawBackgroundGradient = (w, h) => {
     const ctx = bgBuffer.drawingContext;
     const gradient = ctx.createRadialGradient(w/2, h, 0, w/2, h, h);
-    gradient.addColorStop(0, "#ffc8c8");
-    gradient.addColorStop(1, "#ff6464");
+    gradient.addColorStop(0, "rgb(255, 200, 200)");
+    gradient.addColorStop(1, "rgb(255, 100, 100)");
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, w, h);
   };
 
   const generateNoiseTexture = (w, h) => {
-    noiseGraphics = p.createGraphics(w/4, h/4);
-    noiseGraphics.noStroke();
-    for (let x = 0; x < noiseGraphics.width; x += 2) {
-      for (let y = 0; y < noiseGraphics.height; y += 2) {
-        const noiseVal = p.noise(x * 0.1, y * 0.1);
+    noiseGraphics.loadPixels();
+    for (let x = 0; x < w; x += 2) {
+      for (let y = 0; y < h; y += 2) {
+        const noiseVal = p.noise(x * 0.05, y * 0.05);
         const navyBlue = p.map(noiseVal, 0, 1, 150, 200);
-        noiseGraphics.fill(0, 0, navyBlue);
-        noiseGraphics.rect(x, y, 2, 2);
+        noiseGraphics.set(x, y, [0, 0, navyBlue]);
       }
     }
-  };
-
-  const createGrainTexture = (w, h) => {
-    grainTexture = p.createGraphics(w/4, h/4);
-    grainTexture.loadPixels();
-    for (let x = 0; x < grainTexture.width; x++) {
-      for (let y = 0; y < grainTexture.height; y++) {
-        const grain = p.random(-25, 25);
-        grainTexture.set(x, y, [128 + grain, 128 + grain, 128 + grain, 15]);
-      }
-    }
-    grainTexture.updatePixels();
+    noiseGraphics.updatePixels();
   };
 
   p.draw = () => {
@@ -89,12 +75,12 @@ const sketch = (p) => {
     // Draw precomputed background
     p.image(bgBuffer, 0, 0);
 
-    // Wave generation optimized
-    if (p.frameCount % (60 - p.map(energyLevel, 0, 1, 10, 50)) === 0) {
+    // Maintain original wave timing
+    if (p.frameCount % (60 - p.map(energyLevel, 0, 1, 10, 50)) {
       waves.push(new Wave());
     }
 
-    // Update and draw waves
+    // Original wave behavior
     for (let i = waves.length - 1; i >= 0; i--) {
       waves[i].update();
       waves[i].display();
@@ -102,19 +88,27 @@ const sketch = (p) => {
     }
     p.pop();
 
-    // Apply noise and grain effects
+    // Original overlay effects
     p.blendMode(p.SCREEN);
-    p.image(noiseGraphics, 0, 0, p.width, p.height);
-    p.blendMode(p.OVERLAY);
-    p.image(grainTexture, 0, 0, p.width, p.height);
+    p.image(noiseGraphics, 0, 0);
     p.blendMode(p.BLEND);
+
+    // Optimized grain effect
+    p.loadPixels();
+    for (let i = 0; i < p.pixels.length; i += 4) {
+      const grain = p.random(-5, 5);
+      p.pixels[i] += grain;
+      p.pixels[i + 1] += grain;
+      p.pixels[i + 2] += grain;
+    }
+    p.updatePixels();
   };
 
   class Wave {
     constructor() {
       this.radius = 0;
       this.speed = p.map(energyLevel, 0, 1, 1, 5);
-      this.segments = 60;
+      this.segments = 120;
       this.glitchProbability = 0.01;
       this.lifespan = 255;
       this.noiseOffsetX = p.random(1000);
@@ -131,10 +125,6 @@ const sketch = (p) => {
     }
 
     display() {
-      const baseColor = p.color(255, 150, 0, this.lifespan);
-      const darkBeige = p.color(100, 90, 70, this.lifespan);
-      const frameNoise = p.frameCount * 0.01;
-      
       p.push();
       p.translate(p.width / 2, p.height);
       p.beginShape(p.POINTS);
@@ -143,18 +133,23 @@ const sketch = (p) => {
         const angle = p.map(i, 0, this.segments, 0, p.TWO_PI);
         const noiseX = this.noiseOffsetX + this.radius * 0.01 * p.cos(angle);
         const noiseY = this.noiseOffsetY + this.radius * 0.01 * p.sin(angle);
-        const radiusOffset = p.noise(noiseX, noiseY, frameNoise) * 20;
+        const radiusOffset = p.noise(noiseX, noiseY, p.frameCount * 0.01) * 20;
         
         const x = (this.radius + radiusOffset) * p.cos(angle);
         const y = (this.radius + radiusOffset) * p.sin(angle);
         const size = p.map(p.noise(i * 0.1, this.radius * 0.05), 0, 1, 2, 8);
         const inter = p.map(this.radius, 0, p.width, 0, 1);
         
-        let c = p.lerpColor(baseColor, darkBeige, inter);
+        let c = p.lerpColor(
+          p.color(255, 150, 0, this.lifespan),
+          p.color(100, 90, 70, this.lifespan),
+          inter
+        );
+        
         if (p.random(1) < this.glitchProbability * energyLevel) {
           c = p.color(p.random(255), p.random(255), p.random(255), this.lifespan);
         }
-        
+
         p.stroke(c);
         p.strokeWeight(size);
         p.vertex(x, y);
@@ -165,7 +160,7 @@ const sketch = (p) => {
     }
   }
 
-  // Unified input handling
+  // Original interaction handlers remain unchanged
   const handleStart = (y) => {
     isDragging = true;
     lastY = y;
@@ -184,7 +179,6 @@ const sketch = (p) => {
     isDragging = false;
   };
 
-  // Mouse handlers
   p.mousePressed = () => {
     if (p.mouseX > 0 && p.mouseX < p.width && p.mouseY > 0 && p.mouseY < p.height) {
       handleStart(p.mouseY);
@@ -203,18 +197,14 @@ const sketch = (p) => {
     return true;
   };
 
-  // Touch handlers
   p.touchStarted = (event) => {
     const touch = event.touches[0];
     const rect = canvasElement.getBoundingClientRect();
     
-    if (touch.clientX >= rect.left &&
-        touch.clientX <= rect.right &&
-        touch.clientY >= rect.top &&
-        touch.clientY <= rect.bottom) {
+    if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+        touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
       handleStart(touch.clientY);
       event.preventDefault();
-      event.stopPropagation();
       return false;
     }
     return true;
@@ -224,10 +214,7 @@ const sketch = (p) => {
     if (isDragging) {
       const touch = event.touches[0];
       handleMove(touch.clientY);
-      if (Math.abs(touch.clientY - lastY) > 2) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
+      event.preventDefault();
       return false;
     }
     return true;
@@ -242,7 +229,8 @@ const sketch = (p) => {
     const w = containerElement?.offsetWidth || window.innerWidth;
     const h = containerElement?.offsetHeight || window.innerHeight;
     p.resizeCanvas(w, h);
-    noiseGraphics = p.createGraphics(p.width, p.height);
+    bgBuffer = p.createGraphics(w, h);
+    drawBackgroundGradient(w, h);
     generateNoiseTexture(w, h);
   };
 };
