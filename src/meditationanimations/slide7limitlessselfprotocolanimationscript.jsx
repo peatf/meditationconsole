@@ -200,7 +200,7 @@ function drawArtText() {
   // Draw a soft shadow (glow) by drawing the text offset and with low opacity.
   textLayer.push();
   textLayer.fill(p.red(questionColor), p.green(questionColor), p.blue(questionColor), 50);
-  textLayer.text(question, boxX + 2, boxY + 2, boxW, boxH);
+  textLayer.text(question, boxX, boxY, boxW, boxH);
   textLayer.pop();
   // Optionally, if you still want a blur effect, you can try a very slight blur:
   // textLayer.filter(p.BLUR, 1);
