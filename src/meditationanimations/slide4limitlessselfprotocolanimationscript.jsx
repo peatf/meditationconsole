@@ -9,9 +9,9 @@ const sketch = (p) => {
   /*
     CONFIG
   */
-  const FISH_COUNT = 6;       // Fewer fish => lower memory & CPU usage
-  const TRAIL_LENGTH = 5;     // Shorter trail => less stored data per fish
-  const FRAME_RATE = 30;      // Lower framerate => less CPU overhead
+  const FISH_COUNT = 6;       // fewer fish => less memory overhead
+  const TRAIL_LENGTH = 12;    // short-ish trail for motion complexity
+  const FRAME_RATE = 30;      // limit frame rate for better performance
   const QUESTIONS = [
     "What is the limitless self like?",
     "How would you describe them?",
@@ -48,27 +48,27 @@ const sketch = (p) => {
     void main() {
       vec2 uv = vTexCoord * 2.0 - 1.0;
       float time = u_time * 0.3;
-
+      
       float n = sin(uv.x * 3.0 + time) * 0.3 + 
                 sin(uv.y * 2.5 + time) * 0.4 + 
                 sin((uv.x + uv.y) * 4.0 + time) * 0.3;
-
+      
       // Base color gradient
       vec3 base = mix(vec3(0.16, 0.36, 0.20), vec3(0.96, 0.84, 0.65), n * 0.5);
-
+      
       // Pink accent with increased saturation
       vec3 pinkAccent = vec3(0.95, 0.45, 0.60);
       vec3 greenAccent = vec3(0.24, 0.42, 0.30);
       vec3 accent = mix(pinkAccent, greenAccent, n);
-
+      
       // Additional pink glow
       float pinkGlow = sin(uv.x * 2.0 + time * 0.5) * 0.5 + 0.5;
       vec3 finalColor = mix(base, accent, smoothstep(0.3, 0.7, n)) + pinkAccent * pinkGlow * 0.2;
-
+      
       // Subtle paper-like noise
       float paper = hash(uv * 100.0) * 0.1;
 
-      // Add a simple CRT-like scan line effect
+      // Simple CRT-like scan line effect
       float scan = sin(gl_FragCoord.y * 2.0) * 0.05;
       finalColor -= scan;
 
@@ -108,65 +108,99 @@ const sketch = (p) => {
   let canvasElement;
 
   /*
-    FISH CLASS (short trail, fewer resources)
+    COMPLEX FISH CLASS: bigger fish, wave amplitude in shape, short body history
   */
-  class SimpleFish {
+  class ComplexFish {
     constructor(x, y, col) {
       this.color = p.color(col);
       this.pos = p.createVector(x, y);
       this.vel = random2DVector().mult(p.random(1, 2));
       this.acc = p.createVector();
-      this.maxSpeed = 2;
-      this.maxForce = 0.05;
+      this.maxSpeed = 2.3;   // slightly faster
+      this.maxForce = 0.06;  // slightly higher turning
+      this.baseSize = p.random(20, 35); // bigger fish
+      this.waveAmplitude = p.random(0.8, 1.4);
 
-      // Short trailing
+      // moderate trail for a fluid motion look
       this.history = [];
-      this.historyMax = TRAIL_LENGTH;
+      this.historyMax = TRAIL_LENGTH; 
+      this.timeOffset = p.random(1000);
+      this.pulseRate = p.random(0.01, 0.02);
     }
+
     applyForce(force) {
       this.acc.add(force);
     }
+
     update() {
       this.vel.add(this.acc);
       this.vel.limit(this.maxSpeed);
       this.pos.add(this.vel);
       this.acc.mult(0);
 
-      // Keep a small trail
+      // track positions for short trail
       this.history.unshift(this.pos.copy());
       if (this.history.length > this.historyMax) {
         this.history.pop();
       }
     }
-    show() {
-      p.noStroke();
-      // Draw head
-      p.fill(this.color);
-      p.ellipse(this.pos.x, this.pos.y, 20, 12);
 
-      // Minimal trailing ellipses
-      let alphaDecrement = 150 / this.historyMax;
+    show() {
+      // We'll do a single wave-based ellipse per trail segment
+      // to reintroduce the "undulating" shape from older code
+      p.noStroke();
+
+      let timeFactor = p.frameCount * this.pulseRate + this.timeOffset;
+
       for (let i = 0; i < this.history.length; i++) {
-        let a = 150 - i * alphaDecrement;
-        p.fill(p.red(this.color), p.green(this.color), p.blue(this.color), a);
-        let trailPos = this.history[i];
-        let size = p.map(i, 0, this.historyMax, 20, 5);
-        p.ellipse(trailPos.x, trailPos.y, size, size * 0.6);
+        let progress = i / this.historyMax;
+        let pos = this.history[i];
+
+        // wave/pulse
+        let wave = p.sin(progress * 3 + timeFactor) * this.waveAmplitude;
+        let size = this.baseSize + wave * (this.baseSize * 0.5);
+
+        // fade older segments
+        let alphaVal = p.map(i, 0, this.historyMax, 150, 0);
+        p.fill(p.red(this.color), p.green(this.color), p.blue(this.color), alphaVal);
+
+        // size shrinks for older segments
+        let sizeFactor = p.map(i, 0, this.historyMax, 1, 0.4);
+        let finalSize = size * sizeFactor;
+
+        p.push();
+        p.translate(pos.x, pos.y);
+        // optional rotate by velocity heading for a more directional look
+        if (i === 0) {
+          // rotate only for the head, optional
+          p.rotate(this.vel.heading());
+        }
+        p.ellipse(0, 0, finalSize * 2, finalSize);
+        p.pop();
       }
     }
+
     showShadow() {
-      // Minimal shadow, no heavy blur
+      // single blur pass for performance
       p.noStroke();
-      p.fill(0, 30); // small alpha
-      p.ellipse(this.pos.x + 10, this.pos.y + 10, 20, 12);
+      p.drawingContext.filter = "blur(3px)";
+
+      // just the head's shadow (i=0)
+      if (this.history.length > 0) {
+        let headPos = this.history[0];
+        p.fill(0, 40);
+        p.ellipse(headPos.x + 20, headPos.y + 20, this.baseSize * 1.8, this.baseSize);
+      }
+      p.drawingContext.filter = "none";
     }
+
     edges() {
-      // Wrap around edges
       if (this.pos.x > p.width + 50) this.pos.x = -50;
       if (this.pos.x < -50) this.pos.x = p.width + 50;
       if (this.pos.y > p.height + 50) this.pos.y = -50;
       if (this.pos.y < -50) this.pos.y = p.height + 50;
     }
+
     flock(allFish) {
       let align = p.createVector();
       let coh = p.createVector();
@@ -175,7 +209,7 @@ const sketch = (p) => {
       for (let other of allFish) {
         if (other === this) continue;
         let d = p.dist(this.pos.x, this.pos.y, other.pos.x, other.pos.y);
-        if (d < 80) {
+        if (d < 100) {
           align.add(other.vel);
           coh.add(other.pos);
           let diff = p.constructor.Vector.sub(this.pos, other.pos).div(d);
@@ -210,14 +244,14 @@ const sketch = (p) => {
     let w = container ? container.offsetWidth : 800;
     let h = container ? container.offsetHeight : 600;
 
-    // Create the p5 canvas
+    // create the p5 canvas
     const canvas = p.createCanvas(w, h, p.P2D);
     canvasElement = canvas.elt;
 
-    // Lower frame rate => fewer computations
+    // limit frame rate
     p.frameRate(FRAME_RATE);
 
-    // Position absolutely, like Slide5
+    // position absolutely, like your Slide5
     canvasElement.style.position = "absolute";
     canvasElement.style.left = "50%";
     canvasElement.style.top = "50%";
@@ -226,26 +260,26 @@ const sketch = (p) => {
 
     p.pixelDensity(1);
 
-    // Create a separate WEBGL layer for the shader
+    // create a separate WEBGL layer for the shader
     shaderLayer = p.createGraphics(w, h, p.WEBGL);
     shaderLayer.pixelDensity(1);
     shaderProgram = shaderLayer.createShader(vertShader, fragShader);
     shaderLayer.shader(shaderProgram);
     shaderLayer.noStroke();
 
-    // Create a 2D text layer
+    // create a 2D text layer
     textLayer = p.createGraphics(w, h);
     textLayer.pixelDensity(1);
     textLayer.textAlign(p.CENTER, p.CENTER);
     textLayer.textSize(p.min(w, h) * 0.055);
 
-    // Create fish
+    // create fish
     fish = [];
     const cx = w / 2;
     const cy = h / 2;
     for (let i = 0; i < FISH_COUNT; i++) {
       let c = fishColors[p.int(p.random(fishColors.length))];
-      fish.push(new SimpleFish(cx, cy, c));
+      fish.push(new ComplexFish(cx, cy, c));
     }
   };
 
@@ -260,7 +294,7 @@ const sketch = (p) => {
     shaderLayer.rect(0, 0, p.width, p.height);
     p.image(shaderLayer, 0, 0);
 
-    // 2) Fish shadows (minimal, no heavy blur)
+    // 2) Fish shadows (single blur pass)
     p.push();
     p.blendMode(p.MULTIPLY);
     fish.forEach((f) => f.showShadow());
@@ -317,8 +351,6 @@ const sketch = (p) => {
 
   /*
     MOUSE & TOUCH EVENTS
-    - Make sure your nav buttons have higher z-index
-      so they remain clickable.
   */
   p.mousePressed = () => {
     let now = p.millis();
@@ -341,6 +373,7 @@ const sketch = (p) => {
       evt.preventDefault();
       return false;
     }
+    // if user taps a button, let it pass
     return true;
   };
 
@@ -353,7 +386,6 @@ const sketch = (p) => {
       const w = container.offsetWidth;
       const h = container.offsetHeight;
       p.resizeCanvas(w, h);
-
       shaderLayer.resizeCanvas(w, h);
       textLayer.resizeCanvas(w, h);
       textLayer.textSize(p.min(w, h) * 0.055);
