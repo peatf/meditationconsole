@@ -97,7 +97,6 @@ const sketch = (p) => {
   ];
 
   // Helper for random2D in instance mode
-  // (since we don't have a global p5 we can do p5.Vector.random2D())
   function random2DVector() {
     const angle = p.random(p.TWO_PI);
     return p.createVector(p.cos(angle), p.sin(angle));
@@ -107,7 +106,6 @@ const sketch = (p) => {
     constructor(x, y, fishColor) {
       this.color = p.color(fishColor);
       this.position = p.createVector(x + p.random(-100, 100), y + p.random(-100, 100));
-      // Replace p5.Vector.random2D() -> p.constructor.Vector.random2D() or a helper
       this.velocity = random2DVector().mult(p.random(1, 2));
       this.acceleration = p.createVector();
       this.maxSpeed = 2;
@@ -168,10 +166,23 @@ const sketch = (p) => {
           p.push();
           p.translate(pos.x, pos.y);
           p.rotate(angle);
-          
+
+          // -- Reduced blur here for better performance:
+          // Instead of blur(8px) or blur(12px), we use blur(3px) or skip.
+          if (layer === 0) {
+            // Soft blur on the front layer
+            p.drawingContext.filter = 'blur(3px)';
+          } else if (layer === 1) {
+            // Smaller blur for middle
+            p.drawingContext.filter = 'blur(2px)';
+          } else {
+            // No blur for the last pass
+            p.drawingContext.filter = 'none';
+          }
+
           let layerSize = size * (1 - layer * 0.15);
-          p.drawingContext.filter = 'blur(8px)';
           
+          // Middle layer: add slight texture
           if (layer === 1) {
             let textureColor = p.color(
               p.red(this.color),
@@ -180,59 +191,24 @@ const sketch = (p) => {
               layerAlpha * 0.7
             );
             p.fill(textureColor);
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < 2; i++) {
               let offset = p.noise(time + i, progress * 2) * 5;
-              p.ellipse(offset, offset, layerSize * 1.3, layerSize * 0.9);
+              p.ellipse(offset, offset, layerSize * 1.2, layerSize * 0.8);
             }
           }
           
+          // Draw main fish shape
           p.ellipse(0, 0, layerSize * 1.6, layerSize);
-          
-          if (layer === 0) {
-            fishColor.setAlpha(layerAlpha * 0.3);
-            p.fill(fishColor);
-            p.drawingContext.filter = 'blur(12px)';
-            p.ellipse(0, 0, layerSize * 2, layerSize * 1.2);
-          }
-          
-          p.drawingContext.filter = 'none';
+
           p.pop();
         });
       }
     }
 
     showShadow() {
+      // Reduced or removed big blurs to help Chrome performance:
       p.noStroke();
-      for (let layer = 0; layer < 2; layer++) {
-        this.body.forEach((pos, index) => {
-          let progress = index / this.bodyLength;
-          let time = p.frameCount * this.pulseRate + this.timeOffset;
-          
-          let blobShape = (p.cos(progress * p.PI) + 1) * this.baseSize;
-          let pulse = p.sin(time) * 0.1 + 1;
-          let wave = p.sin(progress * 3 + time) * this.waveAmplitude;
-          let size = p.max(0, blobShape * pulse + wave);
-          
-          let shadowAlpha = p.map(index, 0, this.bodyLength, 3, 0);
-          p.fill(0, 0, 0, shadowAlpha);
-          
-          p.push();
-          p.translate(pos.x + 30, pos.y + 30);
-          p.rotate(this.velocity.heading());
-          
-          p.drawingContext.filter = 'blur(15px)';
-          let layerSize = size * (1 - layer * 0.15);
-          p.ellipse(0, 0, layerSize * 1.6, layerSize);
-          
-          if (layer === 0) {
-            p.drawingContext.filter = 'blur(20px)';
-            p.ellipse(0, 0, layerSize * 2, layerSize * 1.2);
-          }
-          
-          p.drawingContext.filter = 'none';
-          p.pop();
-        });
-      }
+      fishShadowPass(this.body, this.velocity.heading(), this.baseSize, this.waveAmplitude, this.pulseRate, this.timeOffset);
     }
 
     edges() {
@@ -253,7 +229,6 @@ const sketch = (p) => {
         if (other !== this && d < 100) {
           alignment.add(other.velocity);
           cohesion.add(other.position);
-          // replace p5.Vector.sub(...) => p.constructor.Vector.sub(...)
           let diff = p.constructor.Vector.sub(this.position, other.position).div(d);
           separation.add(diff);
           total++;
@@ -273,17 +248,47 @@ const sketch = (p) => {
   }
 
   /*
+    REDUCED-SHADOW PASS FOR PERFORMANCE
+    (Single blur pass, smaller radius)
+  */
+  function fishShadowPass(body, heading, baseSize, waveAmp, pulseRate, offsetT) {
+    // Instead of multiple layered heavy blurs,
+    // we'll do just one smaller blur pass for each body point
+    p.drawingContext.filter = 'blur(4px)';
+
+    body.forEach((pos, index) => {
+      let progress = index / body.length;
+      let time = p.frameCount * pulseRate + offsetT;
+      let blobShape = (p.cos(progress * p.PI) + 1) * baseSize;
+      let pulse = p.sin(time) * 0.1 + 1;
+      let wave = p.sin(progress * 3 + time) * waveAmp;
+      let size = p.max(0, blobShape * pulse + wave);
+
+      let shadowAlpha = p.map(index, 0, body.length, 5, 0);
+      p.fill(0, 0, 0, shadowAlpha);
+
+      p.push();
+      p.translate(pos.x + 20, pos.y + 20);
+      p.rotate(heading);
+      p.ellipse(0, 0, size * 1.6, size);
+      p.pop();
+    });
+
+    p.drawingContext.filter = 'none';
+  }
+
+  /*
     P5 SETUP
   */
   p.setup = () => {
-    // Basic container-based canvas approach
     const defaultWidth = 800;
     const defaultHeight = 600;
     p.createCanvas(defaultWidth, defaultHeight, p.P2D);
     p.pixelDensity(1);
 
-    // If you want to allow clicks to pass through to container's buttons:
-    // p.canvas.style['pointer-events'] = 'none';
+    // ----- KEY CHANGE FOR CLICKABLE BUTTONS -----
+    // Make the canvas not receive pointer events so user can click underlying buttons:
+    p.canvas.style['pointer-events'] = 'none';
 
     // Resize canvas to match .animationScreen if it exists
     const container = document.querySelector('.animationScreen');
@@ -326,7 +331,7 @@ const sketch = (p) => {
     shaderLayer.rect(0, 0, p.width, p.height);
     p.image(shaderLayer, 0, 0, p.width, p.height);
 
-    // 2) Draw fish shadows (use MULTIPLY blend for shadow effect)
+    // 2) Fish shadows
     p.push();
     p.blendMode(p.MULTIPLY);
     fish.forEach(f => f.showShadow());
@@ -381,9 +386,12 @@ const sketch = (p) => {
 
   /*
     INTERACTION EVENTS
+    -- Note: With pointer-events = none, this won't fire if user taps the canvas.
+    -- If you need the fade-in/fade-out to still work, see the note below.
   */
   p.mousePressed = () => {
-    // Prevent immediate re-click interactions
+    // If the canvas receives no pointer events, this won't fire on mobile/desktop
+    // unless you remove pointer-events: none or find an alternative approach.
     const currentTime = p.millis();
     if (currentTime - lastInteractionTime < minTimeBetweenInteractions) return;
     lastInteractionTime = currentTime;
