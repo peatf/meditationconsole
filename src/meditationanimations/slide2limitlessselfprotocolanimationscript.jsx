@@ -8,13 +8,13 @@ export default function Slide2Animation() {
 const sketch = (p) => {
   let energyLevel = 0;
   let waves = [];
-  let startY = 0;
   let noiseGraphics;
-  let touchBlocked = false;
   let canvasElement;
   let containerElement;
   let isDragging = false;
   let lastY = 0;
+  let bgBuffer;
+  let grainTexture;
 
   p.setup = () => {
     containerElement = document.querySelector(".animationScreen");
@@ -23,9 +23,7 @@ const sketch = (p) => {
     const canvas = p.createCanvas(w, h);
     
     canvasElement = canvas.elt;
-    
-    // Set the willReadFrequently attribute to improve performance of getImageData
-    canvasElement.getContext("2d", { willReadFrequently: true });
+    const ctx = canvasElement.getContext('2d', { willReadFrequently: true });
     
     canvasElement.style.position = "absolute";
     canvasElement.style.left = "50%";
@@ -33,13 +31,53 @@ const sketch = (p) => {
     canvasElement.style.transform = "translate(-50%, -50%)";
     canvasElement.style.touchAction = "none";
     canvasElement.style.zIndex = "1";
-    canvasElement.style.userSelect = "none";
-    canvasElement.onselectstart = () => false;
     
     p.pixelDensity(1);
     p.noStroke();
-    noiseGraphics = p.createGraphics(w, h);
-    generateNoiseTexture();
+    
+    // Precompute background gradient
+    bgBuffer = p.createGraphics(w, h);
+    drawBackgroundGradient(w, h);
+    
+    // Generate optimized noise texture
+    generateNoiseTexture(w, h);
+    
+    // Create static grain texture
+    createGrainTexture(w, h);
+  };
+
+  const drawBackgroundGradient = (w, h) => {
+    const ctx = bgBuffer.drawingContext;
+    const gradient = ctx.createRadialGradient(w/2, h, 0, w/2, h, h);
+    gradient.addColorStop(0, "#ffc8c8");
+    gradient.addColorStop(1, "#ff6464");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, w, h);
+  };
+
+  const generateNoiseTexture = (w, h) => {
+    noiseGraphics = p.createGraphics(w/4, h/4);
+    noiseGraphics.noStroke();
+    for (let x = 0; x < noiseGraphics.width; x += 2) {
+      for (let y = 0; y < noiseGraphics.height; y += 2) {
+        const noiseVal = p.noise(x * 0.1, y * 0.1);
+        const navyBlue = p.map(noiseVal, 0, 1, 150, 200);
+        noiseGraphics.fill(0, 0, navyBlue);
+        noiseGraphics.rect(x, y, 2, 2);
+      }
+    }
+  };
+
+  const createGrainTexture = (w, h) => {
+    grainTexture = p.createGraphics(w/4, h/4);
+    grainTexture.loadPixels();
+    for (let x = 0; x < grainTexture.width; x++) {
+      for (let y = 0; y < grainTexture.height; y++) {
+        const grain = p.random(-25, 25);
+        grainTexture.set(x, y, [128 + grain, 128 + grain, 128 + grain, 15]);
+      }
+    }
+    grainTexture.updatePixels();
   };
 
   p.draw = () => {
@@ -48,11 +86,15 @@ const sketch = (p) => {
     p.translate((p.width - p.width * s) / 2, (p.height - p.height * s) / 2);
     p.scale(s);
 
-    drawBackgroundGradient();
+    // Draw precomputed background
+    p.image(bgBuffer, 0, 0);
 
+    // Wave generation optimized
     if (p.frameCount % (60 - p.map(energyLevel, 0, 1, 10, 50)) === 0) {
       waves.push(new Wave());
     }
+
+    // Update and draw waves
     for (let i = waves.length - 1; i >= 0; i--) {
       waves[i].update();
       waves[i].display();
@@ -60,65 +102,65 @@ const sketch = (p) => {
     }
     p.pop();
 
+    // Apply noise and grain effects
     p.blendMode(p.SCREEN);
-    p.image(noiseGraphics, 0, 0);
+    p.image(noiseGraphics, 0, 0, p.width, p.height);
+    p.blendMode(p.OVERLAY);
+    p.image(grainTexture, 0, 0, p.width, p.height);
     p.blendMode(p.BLEND);
-
-    p.loadPixels();
-    for (let i = 0; i < p.pixels.length; i += 4) {
-      let grain = p.random(-10, 10);
-      p.pixels[i] += grain;
-      p.pixels[i + 1] += grain;
-      p.pixels[i + 2] += grain;
-    }
-    p.updatePixels();
-    p.filter(p.BLUR, 0.75);
   };
 
   class Wave {
     constructor() {
       this.radius = 0;
       this.speed = p.map(energyLevel, 0, 1, 1, 5);
-      this.segments = 120;
+      this.segments = 60; // Reduced from 120
       this.glitchProbability = 0.01;
       this.lifespan = 255;
       this.noiseOffsetX = p.random(1000);
       this.noiseOffsetY = p.random(1000);
     }
+
     update() {
       this.radius += this.speed;
       this.lifespan -= 1;
     }
+
     isFinished() {
       return this.lifespan < 0;
     }
+
     display() {
-      let baseColor = p.color(255, 150, 0, this.lifespan);
-      let darkBeige = p.color(100, 90, 70, this.lifespan);
+      const baseColor = p.color(255, 150, 0, this.lifespan);
+      const darkBeige = p.color(100, 90, 70, this.lifespan);
+      const frameNoise = p.frameCount * 0.01;
+      
       p.push();
       p.translate(p.width / 2, p.height);
+      p.beginShape(p.POINTS);
+      
       for (let i = 0; i < this.segments; i++) {
-        let angle = p.map(i, 0, this.segments, 0, p.TWO_PI);
-        let noiseX = this.noiseOffsetX + this.radius * 0.01 * p.cos(angle);
-        let noiseY = this.noiseOffsetY + this.radius * 0.01 * p.sin(angle);
-        let radiusOffset = p.noise(noiseX, noiseY, p.frameCount * 0.01) * 20;
-        let x = (this.radius + radiusOffset) * p.cos(angle);
-        let y = (this.radius + radiusOffset) * p.sin(angle);
-        let size = p.map(p.noise(i * 0.1, this.radius * 0.05), 0, 1, 2, 8);
-        let inter = p.map(this.radius, 0, p.width, 0, 1);
+        const angle = p.map(i, 0, this.segments, 0, p.TWO_PI);
+        const noiseX = this.noiseOffsetX + this.radius * 0.01 * p.cos(angle);
+        const noiseY = this.noiseOffsetY + this.radius * 0.01 * p.sin(angle);
+        const radiusOffset = p.noise(noiseX, noiseY, frameNoise) * 20;
+        
+        const x = (this.radius + radiusOffset) * p.cos(angle);
+        const y = (this.radius + radiusOffset) * p.sin(angle);
+        const size = p.map(p.noise(i * 0.1, this.radius * 0.05), 0, 1, 2, 8);
+        const inter = p.map(this.radius, 0, p.width, 0, 1);
+        
         let c = p.lerpColor(baseColor, darkBeige, inter);
-        let colorOffset = p.noise(this.radius * 0.02, i * 0.05, p.frameCount * 0.01) * 50 - 25;
-        let r = p.constrain(p.red(c) + colorOffset, 0, 255);
-        let g = p.constrain(p.green(c) + colorOffset, 0, 255);
-        let b = p.constrain(p.blue(c) + colorOffset, 0, 255);
-        p.fill(r, g, b, this.lifespan);
         if (p.random(1) < this.glitchProbability * energyLevel) {
-          x += p.random(-10, 10);
-          y += p.random(-10, 10);
-          p.fill(p.random(255), p.random(255), p.random(255));
+          c = p.color(p.random(255), p.random(255), p.random(255), this.lifespan);
         }
-        p.ellipse(x, y, size, size);
+        
+        p.stroke(c);
+        p.strokeWeight(size);
+        p.vertex(x, y);
       }
+      
+      p.endShape();
       p.pop();
     }
   }
