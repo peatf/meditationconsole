@@ -461,4 +461,18 @@
   z-index: 2 !important;
   position: relative;
 }
+@media (max-width: 768px) {
+  /* Reduce or remove padding on the container for mobile */
+  .container {
+    padding: 1rem; /* or 0 for a full-bleed look */
+  }
+
+  /* Allow the console to span wider than the default constraints */
+  .console {
+    max-width: none;   /* Remove the 50rem cap */
+    width: 100%;       /* Make sure it uses the full available width */
+    border-radius: 0;  /* Optionally remove border radius for full-bleed */
+  }
+}
+
 }
