@@ -281,11 +281,10 @@ const sketch = (p) => {
   };
 
   p.touchStarted = (evt) => {
-    if (evt.target === canvasElement) {
-      p.mousePressed();
-      evt.preventDefault();
-    }
-    return true;
+    // Always trigger the mousePressed behavior on touch.
+    p.mousePressed();
+    evt.preventDefault();
+    return false;
   };
 
   p.windowResized = () => {
