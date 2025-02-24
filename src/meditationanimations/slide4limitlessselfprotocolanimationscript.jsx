@@ -247,7 +247,8 @@ const sketch = (p) => {
     textLayer.clear();
     textLayer.fill(0, 8);
     textLayer.rect(0, 0, p.width, p.height);
-    textLayer.fill(255, questionAlpha);
+    // Change the fill to royal blue:
+    textLayer.fill(65, 105, 225, questionAlpha);
     textLayer.text(questions[currentQuestionIndex], p.width / 2, p.height / 2);
     p.image(textLayer, 0, 0, p.width, p.height);
   };
