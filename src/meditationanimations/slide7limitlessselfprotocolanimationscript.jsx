@@ -127,7 +127,6 @@ const sketch = (p) => {
     for (let i = 0; i < flowField.length; i++) {
       let v = flowField[i];
       let angle = p.noise(v.x * 0.005, v.y * 0.005, flowFieldZOffset) * p.TWO_PI * 2;
-      // Use p.createVector with cosine and sine:
       let vec = p.createVector(p.cos(angle), p.sin(angle));
       vec.setMag(particleSpeed);
 
@@ -183,37 +182,47 @@ const sketch = (p) => {
   }
 
   // TEXT: Vertically center and allow wrapping on mobile
-function drawArtText() {
-  // Clear and set up the textLayer
-  textLayer.clear();
-  textLayer.textWrap(p.WORD);
-  textLayer.textAlign(p.CENTER, p.CENTER);
-  textLayer.textSize(p.min(p.width, p.height) * 0.04);
-  textLayer.textFont("sans-serif");
+  function drawArtText() {
+    textLayer.clear();
+    // On very narrow screens, disable wrapping to prevent squishing.
+    if (p.width < 480) {
+      textLayer.textWrap(p.NO_WRAP);
+    } else {
+      textLayer.textWrap(p.WORD);
+    }
+    textLayer.textAlign(p.CENTER, p.CENTER);
 
-  // Calculate bounding box: 80% of width, 50% of height, centered.
-  let boxW = p.width * 0.8;
-  let boxH = p.height * 0.5;
-  let boxX = (p.width - boxW) / 2;
-  let boxY = (p.height - boxH) / 2;
+    // Calculate a dynamic text size, with a minimum for mobile.
+    let baseTextSize = p.min(p.width, p.height) * 0.04;
+    let adjustedTextSize = baseTextSize;
+    if (p.width < 480) {
+      adjustedTextSize = 20;
+    }
+    textLayer.textSize(adjustedTextSize);
+    textLayer.textFont("sans-serif");
 
-  // Draw a soft shadow (glow) by drawing the text offset and with low opacity.
-  textLayer.push();
-  textLayer.fill(p.red(questionColor), p.green(questionColor), p.blue(questionColor), 50);
-  textLayer.text(question, boxX, boxY, boxW, boxH);
-  textLayer.pop();
-  // Optionally, if you still want a blur effect, you can try a very slight blur:
-  // textLayer.filter(p.BLUR, 1);
+    // Calculate bounding box: 80% of width; for height, use 50% normally,
+    // and increase to 60% on mobile for better legibility.
+    let boxW = p.width * 0.8;
+    let boxH = p.height * 0.5;
+    if (p.width < 480) {
+      boxH = p.height * 0.6;
+    }
+    let boxX = (p.width - boxW) / 2;
+    let boxY = (p.height - boxH) / 2;
 
-  // Draw the main text on top in full opacity.
-  textLayer.fill(questionColor);
-  textLayer.text(question, boxX, boxY, boxW, boxH);
+    // Draw a soft shadow (glow) behind the text.
+    textLayer.push();
+    textLayer.fill(p.red(questionColor), p.green(questionColor), p.blue(questionColor), 50);
+    textLayer.text(question, boxX, boxY, boxW, boxH);
+    textLayer.pop();
 
-  // Render the textLayer onto the main canvas.
-  p.image(textLayer, 0, 0);
-}
+    // Draw the main text on top in full opacity.
+    textLayer.fill(questionColor);
+    textLayer.text(question, boxX, boxY, boxW, boxH);
 
-
+    p.image(textLayer, 0, 0);
+  }
 
   // NOISE OVERLAY
   function applySubtleNoise(gfx) {
