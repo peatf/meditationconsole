@@ -10,28 +10,25 @@
 }
 
 .console {
+  max-width: 50rem;
   width: 100%;
-  max-width: 70rem; /* e.g. ~1120px */
-  margin: 0 auto;   /* centers the card horizontally */
   padding: 2rem;
   border-radius: 2rem;
   background-color: #E8E9E3;
-  background: linear-gradient(135deg, #E8E9E3, #e0e1db);
+  box-shadow: -8px -4px 12px rgba(255, 255, 250, 0.8),
+    8px 4px 16px rgba(166, 167, 161, 0.3);
+  position: relative;
+ background: linear-gradient(
+    135deg,
+    #E8E9E3,
+    #e0e1db
+  );
   box-shadow: 
     -8px -4px 12px rgba(255, 255, 250, 0.8),
     8px 4px 16px rgba(166, 167, 161, 0.3),
     inset 2px 2px 4px rgba(255, 255, 255, 0.2),
     inset -2px -2px 4px rgba(0, 0, 0, 0.1);
 }
-
-/* Override on smaller devices to remove max-width */
-@media (max-width: 768px) {
-  .console {
-    max-width: none;  /* So it can fill the viewport width */
-    border-radius: 0; /* Optional: remove radius for a full-bleed look */
-  }
-}
-
 
 /* LED styles */
 .ledContainer {
@@ -467,7 +464,7 @@
 @media (max-width: 768px) {
   /* Reduce or remove padding on the container for mobile */
   .container {
-    padding: 1rem; /* or 0 for a full-bleed look */
+    padding: 0rem; /* or 0 for a full-bleed look */
   }
 
   /* Allow the console to span wider than the default constraints */
