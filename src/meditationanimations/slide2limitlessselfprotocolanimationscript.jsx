@@ -21,9 +21,16 @@ const sketch = (p) => {
     const canvas = p.createCanvas(w, h);
     canvasElement = canvas.elt;
 
-    // Set the willReadFrequently attribute to improve performance
-    canvasElement.getContext("2d", { willReadFrequently: true });
+    // Add non-passive touchmove event listener to prevent scrolling.
+    canvasElement.addEventListener(
+      "touchmove",
+      (e) => {
+        e.preventDefault();
+      },
+      { passive: false }
+    );
 
+    // Set the canvas styles
     canvasElement.style.position = "absolute";
     canvasElement.style.left = "50%";
     canvasElement.style.top = "50%";
@@ -172,21 +179,21 @@ const sketch = (p) => {
 
   // Mouse handlers
   p.mousePressed = () => {
-      if (p.mouseX > 0 && p.mouseX < p.width && p.mouseY > 0 && p.mouseY < p.height) {
-          handleStart(p.mouseY);
-          return false; // Prevent default
-      }
-      return true;
+    if (p.mouseX > 0 && p.mouseX < p.width && p.mouseY > 0 && p.mouseY < p.height) {
+      handleStart(p.mouseY);
+      return false; // Prevent default
+    }
+    return true;
   };
 
   p.mouseDragged = () => {
-      handleMove(p.mouseY);
-      return false; // Prevent default
+    handleMove(p.mouseY);
+    return false; // Prevent default
   };
 
   p.mouseReleased = () => {
-      handleEnd();
-      return true;
+    handleEnd();
+    return true;
   };
 
   // Touch handlers
@@ -211,7 +218,7 @@ const sketch = (p) => {
     if (isDragging) {
       const touch = event.touches[0];
       handleMove(touch.clientY);
-        event.preventDefault(); // Prevent scrolling and other defaults
+      event.preventDefault(); // Prevent scrolling and other defaults
       return false; // Prevent default
     }
     return true;
