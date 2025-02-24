@@ -49,6 +49,12 @@ const sketch = (p) => {
     p.pixelDensity(1);
     p.noSmooth();
 
+    // Prevent scrolling when touching the canvas
+    p.canvas.style.touchAction = "none";
+    p.canvas.addEventListener("touchmove", (e) => {
+      e.preventDefault();
+    }, { passive: false });
+
     const container = document.querySelector('.animationScreen');
     if (container) {
       p.resizeCanvas(container.offsetWidth, container.offsetHeight);
